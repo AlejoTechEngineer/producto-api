@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: producto-api
+    runtime: java
+    plan: free
+    buildCommand: mvn -B -DskipTests clean package
+    startCommand: java -jar target/producto-api-1.0.0.jar
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: ALLOWED_ORIGIN
+        sync: false
