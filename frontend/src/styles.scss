@@ -48,3 +48,19 @@ h3,
   outline-offset: 2px;
 }
 /* You can add global styles to this file, and also import other style files */
+
+.app-toast .mat-mdc-snack-bar-surface {
+  background: var(--surface-glass) !important;
+  backdrop-filter: blur(16px);
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-body);
+}
+
+.app-toast--success .mat-mdc-snack-bar-surface {
+  border: 1px solid var(--accent-500);
+}
+
+.app-toast--error .mat-mdc-snack-bar-surface {
+  border: 1px solid var(--color-error);
+}
