@@ -1,0 +1,78 @@
+<div class="stats-row">
+  <app-stat-card
+    label="Total de productos"
+    [value]="totalProductos()"
+    [showProgress]="true"
+    [progressPercent]="progresoDecorativo()"
+  />
+  <app-stat-card label="Valor total del inventario" [value]="valorTotalInventario()" prefix="$" [decimals]="2" />
+  <app-stat-card label="Precio promedio" [value]="precioPromedio()" prefix="$" [decimals]="2" />
+</div>
+
+<mat-toolbar class="list-toolbar glass-surface">
+  <mat-form-field appearance="outline" class="buscador">
+    <mat-icon matPrefix>search</mat-icon>
+    <input
+      matInput
+      placeholder="Buscar por nombre..."
+      [value]="busqueda()"
+      (input)="onBuscar($any($event.target).value)"
+    />
+  </mat-form-field>
+
+  <span class="spacer"></span>
+
+  <button mat-flat-button color="primary" routerLink="/productos/nuevo">
+    <mat-icon>add</mat-icon>
+    Nuevo producto
+  </button>
+</mat-toolbar>
+
+@if (loading()) {
+  <div class="skeleton" *ngFor="let i of [1, 2, 3, 4]"></div>
+} @else if (productosFiltrados().length === 0) {
+  <app-empty-state
+    mensaje="Aun no hay productos por aqui — creemos el primero"
+    ctaLabel="Crear el primero"
+    ctaLink="/productos/nuevo"
+  />
+} @else {
+  <table mat-table [dataSource]="productosFiltrados()" matSort (matSortChange)="onOrdenar($event)" class="glass-surface">
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef>ID</th>
+      <td mat-cell *matCellDef="let p">{{ p.id }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="nombre">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
+      <td mat-cell *matCellDef="let p">{{ p.nombre }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="descripcion">
+      <th mat-header-cell *matHeaderCellDef>Descripcion</th>
+      <td mat-cell *matCellDef="let p" class="descripcion-cell" [matTooltip]="p.descripcion ?? ''">
+        {{ p.descripcion }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="precio">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Precio</th>
+      <td mat-cell *matCellDef="let p">{{ p.precio | currency: 'USD' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="acciones">
+      <th mat-header-cell *matHeaderCellDef>Acciones</th>
+      <td mat-cell *matCellDef="let p" class="acciones-cell">
+        <button mat-icon-button [routerLink]="['/productos', p.id, 'editar']" aria-label="Editar">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button (click)="eliminar(p)" aria-label="Eliminar">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+    <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+  </table>
+}
