@@ -1,0 +1,30 @@
+<div class="pasos">
+  <header class="pasos-header">
+    <p class="pasos-kicker">Con base en la rubrica de la actividad</p>
+    <h1 class="brand-heading">Pasos de este desarrollo</h1>
+  </header>
+
+  @for (grupo of grupos; track grupo.criterio) {
+    <section class="pasos-grupo glass-surface">
+      <div class="pasos-grupo-header">
+        <h2>{{ grupo.criterio }}</h2>
+        <span class="pasos-puntaje">{{ grupo.puntaje }} pts</span>
+      </div>
+      <p class="pasos-descripcion">{{ grupo.descripcion }}</p>
+
+      <ol class="pasos-lista">
+        @for (paso of grupo.pasos; track paso.titulo) {
+          <li>
+            <span class="pasos-titulo-paso">{{ paso.titulo }}</span>
+            <span class="pasos-detalle">{{ paso.detalle }}</span>
+          </li>
+        }
+      </ol>
+    </section>
+  }
+
+  <a mat-flat-button color="primary" routerLink="/productos" class="pasos-cta">
+    <mat-icon>arrow_back</mat-icon>
+    Volver al listado
+  </a>
+</div>

@@ -37,5 +37,18 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/acerca-de/acerca-de.component').then((m) => m.AcercaDeComponent),
   },
+  {
+    path: 'actividad',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/actividad/actividad.component').then((m) => m.ActividadComponent),
+  },
+  {
+    path: 'pasos',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/pasos-desarrollo/pasos-desarrollo.component').then(
+        (m) => m.PasosDesarrolloComponent
+      ),
+  },
   { path: '**', redirectTo: 'login' },
 ];

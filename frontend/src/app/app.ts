@@ -29,6 +29,12 @@ import { AuthService } from './core/services/auth.service';
       <span class="app-title">Producto API</span>
       <span class="app-spacer"></span>
       @if (authService.isAuthenticated()) {
+        <button mat-icon-button routerLink="/actividad" matTooltip="Actividad a desarrollar" aria-label="Actividad a desarrollar">
+          <mat-icon>assignment</mat-icon>
+        </button>
+        <button mat-icon-button routerLink="/pasos" matTooltip="Pasos del desarrollo" aria-label="Pasos del desarrollo">
+          <mat-icon>checklist</mat-icon>
+        </button>
         <button mat-icon-button routerLink="/acerca-de" matTooltip="Acerca de" aria-label="Acerca de">
           <mat-icon>info</mat-icon>
         </button>
