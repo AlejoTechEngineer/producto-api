@@ -30,12 +30,17 @@
 
 @if (loading()) {
   <div class="skeleton" *ngFor="let i of [1, 2, 3, 4]"></div>
-} @else if (productosFiltrados().length === 0) {
+} @else if (productoService.productos().length === 0) {
   <app-empty-state
     mensaje="Aun no hay productos por aqui — creemos el primero"
     ctaLabel="Crear el primero"
     ctaLink="/productos/nuevo"
   />
+} @else if (productosFiltrados().length === 0) {
+  <div class="sin-resultados glass-surface">
+    <p>No se encontraron productos que coincidan con "{{ busqueda() }}".</p>
+    <button mat-stroked-button (click)="onBuscar('')">Limpiar busqueda</button>
+  </div>
 } @else {
   <table mat-table [dataSource]="productosFiltrados()" matSort (matSortChange)="onOrdenar($event)" class="glass-surface">
     <ng-container matColumnDef="id">

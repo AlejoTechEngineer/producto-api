@@ -21,7 +21,7 @@ describe('errorInterceptor', () => {
     httpClient = TestBed.inject(HttpClient);
     httpMock = TestBed.inject(HttpTestingController);
     const snackBar = TestBed.inject(MatSnackBar);
-    snackBarOpenSpy = vi.spyOn(snackBar, 'open');
+    snackBarOpenSpy = vi.spyOn(snackBar, 'open').mockImplementation(() => ({}) as any);
   });
 
   afterEach(() => httpMock.verify());

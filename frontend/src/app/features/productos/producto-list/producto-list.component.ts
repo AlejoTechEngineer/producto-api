@@ -40,7 +40,7 @@ import { StatCardComponent } from '../../../shared/stat-card/stat-card.component
   styleUrl: './producto-list.component.scss',
 })
 export class ProductoListComponent implements OnInit {
-  private readonly productoService = inject(ProductoService);
+  protected readonly productoService = inject(ProductoService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 

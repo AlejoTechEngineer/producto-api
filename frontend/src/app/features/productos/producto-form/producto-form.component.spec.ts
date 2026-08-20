@@ -34,7 +34,7 @@ describe('ProductoFormComponent', () => {
     }).compileComponents();
 
     router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate');
+    vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
   });
 
   it('el formulario es invalido si el nombre esta vacio', () => {
