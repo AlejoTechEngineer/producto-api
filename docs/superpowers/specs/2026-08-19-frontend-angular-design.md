@@ -150,8 +150,20 @@ Netlify hacia Render.
   default `http://localhost:4200` para desarrollo local del frontend.
 - Aplica solo a `/api/**`, métodos `GET, POST, PUT, DELETE, OPTIONS`.
 
+**Fixes de seguridad incluidos en el mismo cambio** (encontrados por un
+review automático sobre el commit inicial del backend):
+
+- `application.properties`: se elimina el default débil de
+  `DB_PASSWORD` (`123`). La variable de entorno pasa a ser obligatoria
+  en local (sin default), documentado en el README.
+- `GlobalExceptionHandler.handleGenericException`: deja de devolver
+  `ex.getMessage()` en el cuerpo de la respuesta 500 (puede filtrar
+  detalles internos). Se loguea el detalle completo server-side
+  (`log.error(...)`) y se devuelve un mensaje genérico fijo al cliente
+  ("Ha ocurrido un error interno. Intenta más tarde.").
+
 No se modifica ninguna otra parte del backend (controller, service,
-repository, DTOs, exception handling quedan igual).
+repository, DTOs, resto del exception handling quedan igual).
 
 ## Despliegue
 
