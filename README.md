@@ -1,63 +1,91 @@
-# Producto API — Backend RESTful CRUD (Unidad 2)
+<div align="center">
 
-API REST desarrollada con **Spring Boot 3 + Spring Data JPA (Hibernate) + PostgreSQL**
-para gestionar productos, cumpliendo con la Actividad Sumativa de la Unidad 2 del
-módulo *Arquitectura de Aplicaciones Web*.
+# Producto API — CRUD Full Stack con Spring Boot + Angular
 
-## Arquitectura del proyecto
+![Java](https://img.shields.io/badge/Java_17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot_3.3-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Angular](https://img.shields.io/badge/Angular_21-DD0031?style=for-the-badge&logo=angular&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![REST API](https://img.shields.io/badge/REST-API-FF6B35?style=for-the-badge)
 
-```
-src/main/java/com/eafit/productoapi/
-├── controller/        # Expone los endpoints REST (capa de presentación)
-│   └── ProductoController.java
-├── service/            # Interfaz de la lógica de negocio
-│   ├── ProductoService.java
-│   └── impl/
-│       └── ProductoServiceImpl.java   # Implementación (capa de aplicación)
-├── repository/         # Acceso a datos vía Spring Data JPA (ORM)
-│   └── ProductoRepository.java
-├── model/               # Entidad JPA mapeada a la tabla "productos"
-│   └── Producto.java
-├── dto/                  # Objetos de transferencia (entrada/salida) hacia el cliente
-│   ├── ProductoRequestDTO.java
-│   └── ProductoResponseDTO.java
-├── exception/          # Manejo centralizado de errores
-│   ├── ResourceNotFoundException.java
-│   ├── ErrorResponse.java
-│   └── GlobalExceptionHandler.java
-└── ProductoApiApplication.java
-```
+> API REST con Spring Boot + JPA/Hibernate sobre PostgreSQL, y un frontend Angular
+> standalone/signals con dashboard, gráficos y diseño propio, desplegados en
+> Render y Netlify respectivamente.
 
-Esta separación en paquetes (controller / service / repository / model / dto / exception)
-facilita el mantenimiento, la escalabilidad y las pruebas del proyecto.
+## Descripción
+
+</div>
+
+---
+
+Implementación de una **API REST** en **Spring Boot 3 + Spring Data JPA (Hibernate)**
+con operaciones CRUD completas sobre **PostgreSQL**, más un **frontend en Angular**
+(standalone components, signals, Angular Material) que consume esa API con un
+dashboard de estadísticas, gráficos y autenticación de demostración. Ambas partes
+están desplegadas y funcionando en producción.
+
+## Demo en vivo
+
+| | URL |
+|---|---|
+| 🖥️ **Frontend** (Netlify) | [producto-api.netlify.app](https://producto-api.netlify.app) |
+| ⚙️ **Backend** (Render) | [producto-api-tc60.onrender.com/api/productos](https://producto-api-tc60.onrender.com/api/productos) |
+
+Usuario de demostración: **`admin`** / contraseña **`admin`**.
+
+Una vez dentro, el propio frontend documenta el proyecto: el botón **Actividad**
+muestra el enunciado de la actividad académica, y **Pasos** muestra cómo este
+desarrollo cubre cada criterio de su rúbrica.
+
+> El backend está en el plan free de Render — si lleva más de 15 min sin
+> tráfico, el primer request tarda 30-50s en despertar. No es un error.
+
+## Endpoints implementados
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/api/productos` | Listar todos los productos |
+| GET | `/api/productos/{id}` | Obtener un producto por id |
+| POST | `/api/productos` | Crear un nuevo producto |
+| PUT | `/api/productos/{id}` | Actualizar un producto existente |
+| DELETE | `/api/productos/{id}` | Eliminar un producto |
 
 ## Modelo de datos: Producto
 
-| Campo        | Tipo       | Descripción                    |
-|--------------|-----------|---------------------------------|
-| id           | Long      | Identificador único (autogenerado) |
-| nombre       | String    | Nombre del producto             |
-| descripcion  | String    | Descripción breve               |
-| precio       | BigDecimal| Precio del producto              |
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id` | Long | Identificador único (autogenerado) |
+| `nombre` | String | Nombre del producto |
+| `descripcion` | String | Descripción breve |
+| `precio` | BigDecimal | Precio del producto |
 
-## Endpoints disponibles
+## Arquitectura
 
-| Método | Endpoint              | Descripción                     |
-|--------|------------------------|----------------------------------|
-| GET    | `/api/productos`       | Lista todos los productos        |
-| GET    | `/api/productos/{id}`  | Obtiene un producto por id       |
-| POST   | `/api/productos`       | Crea un nuevo producto           |
-| PUT    | `/api/productos/{id}`  | Actualiza un producto existente  |
-| DELETE | `/api/productos/{id}`  | Elimina un producto              |
+```mermaid
+flowchart TD
+    subgraph FE["Frontend — Angular (Netlify)"]
+        Login[LoginComponent] --> Shell[App shell / rutas]
+        Shell --> Lista[ProductoListComponent<br/>dashboard + graficos]
+        Shell --> Form[ProductoFormComponent]
+        Lista --> Servicio[ProductoService]
+        Form --> Servicio
+    end
 
-Ejemplo de body para POST / PUT:
-```json
-{
-  "nombre": "Teclado mecanico",
-  "descripcion": "Teclado mecanico switches rojos",
-  "precio": 189900
-}
+    Servicio -->|HTTP REST / JSON| Controller
+
+    subgraph BE["Backend — Spring Boot (Render, Docker)"]
+        Controller[ProductoController] --> ServiceImpl[ProductoServiceImpl]
+        ServiceImpl --> Repo[ProductoRepository<br/>Spring Data JPA]
+        Controller --> Errores[GlobalExceptionHandler]
+    end
+
+    Repo -->|Hibernate ORM| DB[(PostgreSQL<br/>Render)]
 ```
+
+Separación en capas (`controller` / `service` / `repository` / `model` / `dto` /
+`exception` en el backend; `core` / `features` / `shared` en el frontend) que
+facilita el mantenimiento, la escalabilidad y las pruebas del proyecto.
 
 ## Manejo de errores
 
@@ -71,97 +99,41 @@ Todos los errores devuelven un cuerpo JSON consistente:
   "path": "/api/productos/99"
 }
 ```
-- `404` — producto no encontrado.
+- `404` — producto no encontrado, o ruta inexistente.
 - `400` — datos inválidos (validaciones `@NotBlank`, `@NotNull`, `@DecimalMin`) o tipo de parámetro incorrecto.
-- `500` — error interno no controlado.
+- `500` — error interno no controlado (mensaje sanitizado, sin exponer detalles internos).
+
+## Pruebas
+
+- **Backend**: JUnit 5 + MockMvc, cubriendo los 4 métodos CRUD y los casos de error.
+- **Frontend**: Vitest, cubriendo servicios, componentes y flujos de usuario.
+- **Manuales**: colección de Postman incluida (`postman_collection.json`) con los
+  4 métodos y casos de error listos para importar.
 
 ## Cómo ejecutar el proyecto localmente
 
-### 1. Requisitos
-- Java 17+
-- Maven 3.9+
-- PostgreSQL corriendo localmente, o una base de datos gratuita en **Supabase** o **Render**.
+### Backend
 
-### 2. Crear la base de datos (si es local)
-```sql
-CREATE DATABASE producto_db;
-```
-
-### 3. Configurar las credenciales
-El proyecto lee la conexión desde variables de entorno (ver `application.properties`).
-Puedes exportarlas antes de correr la app, o crear un `application-local.properties` (ignorado por git):
+**Requisitos:** Java 17+, Maven 3.9+, PostgreSQL local (o una base gratuita en Supabase/Render).
 
 ```bash
+# Crear la base (si es local)
+createdb producto_db
+
+# Configurar credenciales
 export DB_URL=jdbc:postgresql://localhost:5432/producto_db
 export DB_USERNAME=postgres
 export DB_PASSWORD=tu_password
-```
 
-Si usas **Supabase** o **Render**, reemplaza `DB_URL`, `DB_USERNAME` y `DB_PASSWORD`
-por los datos de conexión que te entrega el panel del proveedor (host, puerto, db, usuario y password).
-
-### 4. Ejecutar
-```bash
+# Ejecutar
 mvn spring-boot:run
 ```
-La API quedará disponible en `http://localhost:8080/api/productos`.
 
-Al arrancar, Hibernate (`spring.jpa.hibernate.ddl-auto=update`) crea automáticamente
-la tabla `productos` — no es necesario escribir SQL manualmente.
+La API queda en `http://localhost:8080/api/productos`. Hibernate
+(`spring.jpa.hibernate.ddl-auto=update`) crea la tabla `productos`
+automáticamente — no hace falta SQL manual.
 
-### 5. Probar los endpoints
-Importa `postman_collection.json` en Postman (o Insomnia) y ejecuta en orden:
-1. Crear producto (POST)
-2. Listar productos (GET)
-3. Obtener por id (GET)
-4. Actualizar (PUT)
-5. Eliminar (DELETE)
-6. Casos de error: id inexistente (404) y validación fallida (400)
-
-También puedes probar con `curl`:
-```bash
-curl -X POST http://localhost:8080/api/productos \
-  -H "Content-Type: application/json" \
-  -d '{"nombre":"Mouse","descripcion":"Mouse inalambrico","precio":59900}'
-
-curl http://localhost:8080/api/productos
-```
-
-## Subir el proyecto a GitHub
-
-```bash
-cd producto-api
-git init
-git add .
-git commit -m "Backend RESTful CRUD de Producto - Spring Boot + JPA + PostgreSQL"
-git branch -M main
-git remote add origin https://github.com/TU_USUARIO/producto-api.git
-git push -u origin main
-```
-
-> El `.gitignore` ya excluye `target/`, archivos de IDE y credenciales locales,
-> por lo que solo subirás el código fuente relevante (criterio "Repositorio" de la rúbrica).
-
-## Guion sugerido para el video de entrega (máx. 15 min)
-
-1. **Explicar la arquitectura** (2-3 min): recorre los paquetes `controller`, `service`,
-   `repository`, `model`, `dto`, `exception` y explica el rol de cada uno.
-2. **Mostrar el modelo `Producto` y el repositorio JPA** (2 min): explica cómo el ORM
-   crea la tabla sin SQL manual.
-3. **Levantar la aplicación** (`mvn spring-boot:run`) y mostrar la consola con Hibernate
-   creando la tabla `productos`.
-4. **Probar los 4 métodos en Postman** (5-6 min): POST, GET, PUT, DELETE, y un caso
-   de error (404 o 400) para demostrar el manejo de errores.
-5. **Mostrar el repositorio en GitHub** (1-2 min): estructura de carpetas y el commit history.
-
-## Frontend (Angular)
-
-El frontend vive en `frontend/` — Angular con Angular Material, standalone
-components, signals, dark mode con identidad propia (glassmorphism, acento
-cian, tipografia Space Grotesk + Inter) y un dashboard de estadisticas
-sobre el CRUD de productos.
-
-### Correr en local
+### Frontend
 
 ```bash
 cd frontend
@@ -169,45 +141,34 @@ npm install
 npx ng serve
 ```
 
-Abre `http://localhost:4200`. Por defecto apunta a `http://localhost:8080/api`
-(backend local) — asegúrate de tener el backend corriendo con
-`mvn spring-boot:run` y con `ALLOWED_ORIGIN=http://localhost:4200` (o deja el
-default, que ya es ese valor).
+Abre `http://localhost:4200` — por defecto apunta al backend local
+(`http://localhost:8080/api`).
 
-### Desplegar el backend en Render
+## Despliegue
 
-1. En Render: **New > Blueprint**, conecta el repo de GitHub. Render detecta
-   `render.yaml` automáticamente.
-2. Antes de aplicar el blueprint, crea también una base de datos: **New >
-   PostgreSQL** (plan free), nómbrala `producto-db`.
-3. En el dashboard de `producto-db`, copia el **Internal Database URL**
-   (algo como `postgres://usuario:password@host/nombre_db`). Reemplaza el
-   prefijo `postgres://` por `jdbc:postgresql://` — ese es el valor de
-   `DB_URL`.
-4. Al aplicar el blueprint de `producto-api`, completa las 4 variables que
-   pide: `DB_URL` (el valor armado en el paso anterior), `DB_USERNAME` y
-   `DB_PASSWORD` (los que muestra el dashboard de `producto-db`), y
-   `ALLOWED_ORIGIN` (déjalo en `http://localhost:4200` por ahora — se
-   actualiza en el paso 6).
-5. Espera el deploy y copia la URL pública que Render asigna (algo como
-   `https://producto-api-xxxx.onrender.com`).
-6. Vuelve al paso de Netlify de abajo, obtén la URL del sitio, y **regresa
-   aquí** a actualizar la variable `ALLOWED_ORIGIN` en Render con esa URL
-   (Settings > Environment), lo que dispara un redeploy automático.
+El proyecto está configurado para desplegarse automáticamente en cada push:
 
-> Nota: el plan free de Render duerme el servicio tras ~15 min sin tráfico.
-> El primer request tras eso tarda 30-50s — es esperado, no un error.
+- **Backend → Render**: `render.yaml` define un servicio Docker (`Dockerfile`
+  con build multi-stage Maven + JRE 17). Variables de entorno (`DB_URL`,
+  `DB_USERNAME`, `DB_PASSWORD`, `ALLOWED_ORIGIN`) se configuran manualmente en
+  el dashboard de Render (`sync: false`, nunca versionadas).
+- **Frontend → Netlify**: `frontend/netlify.toml` define el build
+  (`npm run build -- --configuration=production`) y el directorio de
+  publicación (`dist/frontend/browser`). `frontend/public/_redirects` habilita
+  el ruteo del SPA.
 
-### Desplegar el frontend en Netlify
+## Contexto académico
 
-1. Actualiza `frontend/src/environments/environment.ts` con la URL real de
-   Render del paso anterior (`apiUrl: 'https://producto-api-xxxx.onrender.com/api'`),
-   haz commit y push.
-2. En Netlify: **Add new site > Import an existing project**, conecta el
-   mismo repo de GitHub.
-3. Base directory: `frontend`. Netlify lee `netlify.toml` para el resto del
-   build automáticamente.
-4. Deploy. Copia la URL que Netlify asigna (`https://<nombre>.netlify.app`).
-5. Usa esa URL para completar el paso 6 de la sección de Render arriba.
+**Asignatura:** Arquitectura de Aplicaciones Web · **Unidad:** 2 — Backend con
+servicios RESTful CRUD sobre base de datos usando un framework
+**Institución:** Politécnico (Maestría en Arquitectura de Software)
+**Autor:** Alejandro Mendoza — Ingeniero de Software
 
-Cada push a `main` redeploya frontend y backend automáticamente.
+---
+
+## Autor
+
+**Alejandro Mendoza**
+Ingeniero de Software
+
+[![GitHub](https://img.shields.io/badge/GitHub-AlejoTechEngineer-181717?style=for-the-badge&logo=github)](https://github.com/AlejoTechEngineer)
