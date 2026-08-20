@@ -1,0 +1,77 @@
+{
+  "info": {
+    "name": "Producto API - CRUD",
+    "description": "Coleccion de pruebas para los servicios RESTful de Producto (Unidad 2 - Arquitectura de Aplicaciones Web)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api/productos" },
+    { "key": "productoId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "1. Crear producto (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Teclado mecanico\",\n  \"descripcion\": \"Teclado mecanico switches rojos\",\n  \"precio\": 189900\n}"
+        },
+        "url": "{{baseUrl}}"
+      }
+    },
+    {
+      "name": "2. Listar todos los productos (GET)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}"
+      }
+    },
+    {
+      "name": "3. Obtener producto por id (GET)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/{{productoId}}"
+      }
+    },
+    {
+      "name": "4. Actualizar producto (PUT)",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Teclado mecanico RGB\",\n  \"descripcion\": \"Teclado mecanico switches rojos con retroiluminacion RGB\",\n  \"precio\": 219900\n}"
+        },
+        "url": "{{baseUrl}}/{{productoId}}"
+      }
+    },
+    {
+      "name": "5. Eliminar producto (DELETE)",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/{{productoId}}"
+      }
+    },
+    {
+      "name": "6. Error - Producto inexistente (GET 404)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/9999"
+      }
+    },
+    {
+      "name": "7. Error - Validacion (POST 400)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"\",\n  \"descripcion\": \"Producto sin nombre ni precio\"\n}"
+        },
+        "url": "{{baseUrl}}"
+      }
+    }
+  ]
+}
