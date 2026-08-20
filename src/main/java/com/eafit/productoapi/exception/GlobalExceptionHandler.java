@@ -1,6 +1,8 @@
 package com.eafit.productoapi.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,6 +19,8 @@ import java.util.List;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // 404 - El producto solicitado no existe
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -77,11 +81,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request) {
 
+        log.error("Error no controlado en {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("Error interno del servidor")
-                .message(ex.getMessage())
+                .message("Ha ocurrido un error interno. Intenta mas tarde.")
                 .path(request.getRequestURI())
                 .build();
 
