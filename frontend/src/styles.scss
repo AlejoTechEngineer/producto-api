@@ -64,3 +64,10 @@ h3,
 .app-toast--error .mat-mdc-snack-bar-surface {
   border: 1px solid var(--color-error);
 }
+
+.app-confirm-dialog-panel .mat-mdc-dialog-surface {
+  background: var(--surface-glass) !important;
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-lg) !important;
+}
