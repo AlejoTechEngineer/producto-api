@@ -34,4 +34,11 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.message").value("Ha ocurrido un error interno. Intenta mas tarde."))
                 .andExpect(jsonPath("$.message").value(not(containsString("Detalle interno sensible"))));
     }
+
+    @Test
+    void retorna404ParaUnaRutaQueNoExiste() throws Exception {
+        mockMvc.perform(get("/esta-ruta-no-existe"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
 }
