@@ -71,7 +71,10 @@ producto-api/                       (raíz, ya existe)
   `loading = signal(false)`) — sin librería de estado externa.
 - **Angular Material**: `mat-toolbar`, `mat-table` + `matSort`,
   `mat-form-field`, `mat-dialog`, `mat-snack-bar`, `mat-button`,
-  `mat-icon`.
+  `mat-icon`, con un tema M3 custom (dark, acento cian) — ver
+  "Diseño UI/UX" abajo para la paleta y tokens completos.
+- **`@angular/animations`**: para la transición de página y el
+  filtrado animado de filas de la tabla (ver "Diseño UI/UX").
 - **Angular Router**, 3 rutas:
   - `/productos` → `ProductoListComponent`
   - `/productos/nuevo` → `ProductoFormComponent` (modo crear)
@@ -93,50 +96,131 @@ producto-api/                       (raíz, ya existe)
 
 ## Diseño UI/UX
 
+Angular Material sigue siendo la base **funcional** (`mat-table`,
+`mat-dialog`, `mat-form-field`/Reactive Forms, `mat-snack-bar` como
+mecanismo de notificación) — no se reescriben esos componentes. La
+identidad visual se logra con una capa de tokens de diseño (colores,
+tipografía, glassmorphism) por encima: un tema Material custom (M3,
+dark) más una hoja de estilos globales de tokens, consumidos por CSS
+custom properties en todos los componentes.
+
+### Sistema de diseño (tokens)
+
+`frontend/src/styles/_tokens.scss` es la fuente única de verdad,
+importada por `styles.scss` y por cada componente vía `@use`:
+
+- **Color:**
+  - Fondo base: `#0a0b0f` (casi negro, tinte frío).
+  - Superficie glass: `rgba(255, 255, 255, 0.04)` de fondo +
+    `backdrop-filter: blur(16px)` + borde `1px solid rgba(255, 255, 255, 0.08)`.
+  - Acento de marca: cian eléctrico, escala `--accent-500: #22d3ee`
+    (base), `--accent-600: #06b6d4` (hover/active), `--accent-300: #67e8f9`
+    (texto sobre superficies oscuras, focus ring). Usado consistentemente
+    en: botones primarios, focus rings (`outline: 2px solid var(--accent-500)`),
+    bordes de stat cards al hover, estado de éxito en toasts, ícono de
+    check al guardar.
+  - Texto: `#e4e6eb` (primario), `#8a8f98` (secundario/placeholder).
+  - Error: `#f87171` (rojo, reservado a validación/errores — nunca se
+    usa el acento cian para error).
+- **Tipografía:** `Space Grotesk` (display: títulos, números de las
+  stat cards) + `Inter` (cuerpo, labels, tabla), ambas vía
+  `@import` de Google Fonts en `styles.scss` (`family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600`).
+  Nunca Roboto (default de Material).
+- **Espaciado/radios:** escala de espaciado en múltiplos de 4px
+  (8/12/16/24/32/48), radios de borde 12–16px en cards/dialogs,
+  8px en inputs/botones pequeños.
+- **Sombras/transiciones:** sombra sutil `0 8px 24px rgba(0,0,0,0.35)`
+  en cards; transiciones de 150–200ms (`ease-out`) en hovers, aperturas
+  de diálogo, y la transición de página descrita abajo.
+
 ### Vista de lista (`/productos`)
 
-- `mat-toolbar` fija: título "Producto API", campo de búsqueda con ícono
-  de lupa (filtro client-side en vivo sobre `nombre`), botón primario
-  "+ Nuevo producto".
+- `mat-toolbar` con superficie glass (no el color sólido default):
+  título "Producto API" en Space Grotesk, campo de búsqueda con ícono
+  de lupa (filtro client-side en vivo sobre `nombre`, ver animación de
+  filtrado abajo), botón primario "+ Nuevo producto" en acento cian.
+- **Dashboard de estadísticas** (arriba de la tabla, 3 `StatCardComponent`
+  en fila): "Total de productos" (`productos().length`), "Valor total
+  del inventario" (suma de `precio` formateada como moneda), "Precio
+  promedio" (promedio formateado como moneda). Los 3 valores se
+  recalculan como `computed()` sobre `productoService.productos()` — no
+  hay llamada nueva al backend.
+  - Cada card: superficie glass, número grande en Space Grotesk que
+    hace count-up (anima de 0 al valor final en ~800ms cuando cambian
+    los datos, con easing) en vez de aparecer estático.
+  - Tilt 3D al mover el mouse sobre la card (`mousemove` calcula el
+    offset del cursor respecto al centro de la card y aplica
+    `transform: perspective(600px) rotateX(...) rotateY(...)`,
+    `mouseleave` resetea a `rotateX(0) rotateY(0)` con transición suave).
+  - La card de "Total de productos" incluye una barra de progreso
+    decorativa (ancho proporcional, sin unidad de comparación real —
+    puramente decorativa, no es una métrica engañosa).
 - `mat-table` con columnas: ID, Nombre, Descripción (truncada con
   ellipsis + `matTooltip` con el texto completo), Precio (formateado
   como moneda con `CurrencyPipe`), Acciones (íconos editar/eliminar).
 - `matSort` habilitado en Nombre y Precio.
-- Hover sutil en filas.
-- Estado vacío: mensaje "Aún no hay productos" + botón para crear el
-  primero, cuando la lista está vacía y no está cargando.
-- Loading: skeleton rows (no spinner de página completa).
-- Eliminar: abre `ConfirmDialogComponent` (`mat-dialog`) con el nombre
-  del producto antes de llamar a `eliminar()`. Nunca se borra sin
-  confirmación explícita.
+- **Micro-interacciones de la tabla:**
+  - Hover en fila: elevación sutil (`box-shadow` + `background` más
+    claro) y la celda de Acciones pasa de `opacity: 0` a `opacity: 1`
+    con `transform: translateX(4px) → 0` (fade + slide, ~150ms) — los
+    íconos de editar/eliminar no están siempre visibles.
+  - Filtrado por búsqueda: las filas que salen del resultado animan
+    `opacity`/`max-height` a 0 antes de desaparecer (transición
+    ~150-200ms vía Angular `@for` + `animate.enter`/`animate.leave` o
+    un `[@filterAnim]` trigger de `@angular/animations`), no aparecen/
+    desaparecen de golpe.
+- Loading: skeleton rows con shimmer real (`background: linear-gradient`
+  animado con `@keyframes`, ya especificado en la implementación base
+  — se mantiene, es el mismo mecanismo, ahora usando los tokens de
+  color glass en vez de grises genéricos).
+- **Estado vacío:** `EmptyStateComponent` compartido — ilustración SVG
+  simple e inline (una caja/inventario en trazos, en `currentColor` con
+  el acento cian, no un ícono gris de Material), texto con tono cercano
+  ("Aún no hay productos por aquí — creemos el primero"), botón CTA.
+  Mismo componente reutilizable si en el futuro se necesita un estado
+  vacío en otra vista.
+- Eliminar: abre `ConfirmDialogComponent` (`mat-dialog`, restyleado con
+  superficie glass y botón destructivo en rojo de error, no el `warn`
+  default de Material) con el nombre del producto antes de llamar a
+  `eliminar()`. Nunca se borra sin confirmación explícita.
 
 ### Vista de formulario (`/productos/nuevo` y `/productos/:id/editar`)
 
-- Card centrada, `ReactiveFormsModule`.
+- Card centrada con superficie glass, `ReactiveFormsModule`.
 - Validadores en el form que espejan los del backend: `nombre`
   (`required`, `maxLength: 120`), `descripcion` (`maxLength: 500`),
   `precio` (`required`, `min: 0`).
 - Mensajes de error bajo cada campo, mismo texto que los `message` del
   DTO de backend donde aplique.
 - Campo precio con formato de moneda.
-- Botón "Guardar" deshabilitado si el form es inválido; muestra spinner
-  mientras la petición está en curso.
-- Al guardar con éxito: `MatSnackBar` de confirmación + navegación a
-  `/productos`.
+- Botón "Guardar": deshabilitado si el form es inválido. Mientras la
+  petición está en curso, el ícono dentro del botón se transforma (no
+  solo `disabled` + spinner genérico): pasa de un ícono neutro a un
+  spinner de progreso, y al completarse con éxito muestra brevemente un
+  ícono de check animado (~400ms, scale-in) antes de navegar — refuerza
+  que la acción se completó, no solo que dejó de estar "loading".
+- Al guardar con éxito: toast de confirmación (ver "Toasts" abajo) +
+  navegación a `/productos`.
 - En modo editar, el componente carga el producto vía
   `buscarPorId(id)` en `ngOnInit` y prellena el form.
 
-### Estilo visual (dark mode moderno)
+### Toasts (éxito/error)
 
-- Fondo base `#0f1115`, superficie de cards/tabla `#1c2028`.
-- Acento primario: violeta o esmeralda (se decide una paleta concreta
-  de 2-3 opciones durante la implementación, validando contraste WCAG
-  AA).
-- Tipografía: Inter o Roboto.
-- Radios de borde 8–12px, sombras suaves en cards y dialogs,
-  transiciones de 150–200ms en hovers y apertura de diálogos.
-- Tema Angular Material custom (M3) en dark mode, no el tema claro por
-  defecto.
+Se reemplaza el `MatSnackBar` gris default por un `panelClass` custom
+(`app-toast`, `app-toast--success`, `app-toast--error`) aplicado en
+`MatSnackBarConfig`: superficie glass, borde de 1px en el color
+correspondiente (cian para éxito, rojo de error para error), mismo
+radio/tipografía que el resto del sistema. Sigue siendo `MatSnackBar`
+por debajo (no se reemplaza el mecanismo, solo su piel visual) — tanto
+el toast de éxito del formulario como los del `ErrorInterceptor` usan
+el mismo `panelClass`.
+
+### Transición de página
+
+`AppComponent` anima el `router-outlet` con un fade+slide de 200ms al
+cambiar de ruta (`@angular/animations`, trigger en el contenedor del
+outlet: `opacity 0→1` + `transform: translateY(8px)→0`), en vez de un
+salto brusco entre `/productos` y el formulario.
 
 ## Cambios en el backend
 
@@ -206,6 +290,10 @@ repository, DTOs, resto del exception handling quedan igual).
   error), y pruebas de `ProductoListComponent` /
   `ProductoFormComponent` con `TestBed` (renderizado, validación de
   form, interacción básica). Cobertura razonable, sin sobre-invertir.
+  `StatCardComponent` se prueba en su valor de count-up final (sin
+  depender del timing exacto de la animación) y en que el `mousemove`
+  produce un `transform` con `rotate`; `EmptyStateComponent` se prueba
+  en que renderiza el mensaje y el CTA.
 - **Backend:** no se agregan tests nuevos en esta iteración (fuera de
   alcance; ya se identificó como deuda en el análisis previo del
   proyecto).
