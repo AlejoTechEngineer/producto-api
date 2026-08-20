@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Construir un frontend Angular (Material, dark mode, standalone components + signals) que consuma el CRUD existente de `producto-api`, endurecer dos puntos de seguridad del backend, y dejar todo listo para desplegar en Netlify (frontend) + Render (backend).
+**Goal:** Construir un frontend Angular con identidad visual propia (glassmorphism, acento cian, Space Grotesk + Inter, dashboard de stat cards con count-up/tilt 3D, sobre una base funcional de Angular Material y signals) que consuma el CRUD existente de `producto-api`, endurecer dos puntos de seguridad del backend, y dejar todo listo para desplegar en Netlify (frontend) + Render (backend).
 
-**Architecture:** Monorepo. `frontend/` es un proyecto Angular CLI nuevo con arquitectura `core` (servicios/interceptores/modelos compartidos) + `features/productos` (lista y formulario) + `shared` (diálogo de confirmación reutilizable). El backend gana un `WebConfig` para CORS y dos fixes puntuales en `application.properties` y `GlobalExceptionHandler`. Archivos de despliegue (`netlify.toml`, `public/_redirects`, `render.yaml`) quedan versionados para que el deploy sea repetible.
+**Architecture:** Monorepo. `frontend/` es un proyecto Angular CLI nuevo con arquitectura `core` (servicios/interceptores/modelos compartidos) + `features/productos` (lista y formulario) + `shared` (diálogo de confirmación, estado vacío, y stat card — todos reutilizables) + un sistema de tokens de diseño global (`styles/_tokens.scss`) que toda la capa de UI consume. El backend gana un `WebConfig` para CORS y dos fixes puntuales en `application.properties` y `GlobalExceptionHandler`. Archivos de despliegue (`netlify.toml`, `public/_redirects`, `render.yaml`) quedan versionados para que el deploy sea repetible.
 
 **Tech Stack:** Angular (CLI más reciente, standalone components, signals, Angular Material, Reactive Forms, Router), Spring Boot 3.3.4 / Java 17 (backend existente), Jasmine/Karma para tests de frontend, JUnit 5 + MockMvc para tests de backend, GitHub (`gh` CLI), Netlify, Render.
 
@@ -13,9 +13,10 @@
 ## Global Constraints
 
 - Backend: no se toca nada fuera de CORS + los 2 fixes de seguridad (controller, service, repository, DTOs quedan igual).
-- Frontend: standalone components únicamente (sin NgModules), estado con `signals` (sin NgRx), Angular Material para todos los componentes de UI.
-- Solo dark mode (sin toggle claro/oscuro).
+- Frontend: standalone components únicamente (sin NgModules), estado con `signals` (sin NgRx), Angular Material como base funcional para todos los componentes de UI (no se reescriben `mat-table`/`mat-dialog`/Reactive Forms).
+- Solo dark mode (sin toggle claro/oscuro). Fondo `--bg-base: #0a0b0f`, acento `--accent-500: #22d3ee` (cian), tipografía `Space Grotesk` (display) + `Inter` (cuerpo) — únicos valores válidos, fijados en `frontend/src/styles/_tokens.scss` (Task 4).
 - Filtro de búsqueda es client-side sobre los productos ya cargados (sin paginación server-side).
+- Sin command palette (Cmd/Ctrl+K) y sin animación de "salida" de filas filtradas — descartados explícitamente a favor de un solo detalle "wow" (tilt 3D en las stat cards) y de una animación de fade-in únicamente al aparecer.
 - Netlify: base directory `frontend/`, publish directory `dist/frontend/browser`.
 - Render: plan free, build con Maven nativo (sin Docker).
 - Estructura de rutas: `/productos`, `/productos/nuevo`, `/productos/:id/editar`.
@@ -282,14 +283,16 @@ Expected: `origin` apunta al repo recién creado; `gh repo view` muestra el repo
 
 ---
 
-## Task 4: Frontend — Scaffold del proyecto Angular
+## Task 4: Frontend — Scaffold del proyecto Angular + sistema de diseño
 
 **Files:**
 - Create: `frontend/` (proyecto Angular CLI completo)
+- Create: `frontend/src/styles/_tokens.scss`
+- Modify: `frontend/src/styles.scss`
 
 **Interfaces:**
 - Consumes: nada (primera tarea de frontend).
-- Produces: proyecto Angular ejecutable (`ng serve`, `ng test`, `ng build`) con Angular Material y estructura de environments lista, que las Tasks 5-11 modifican.
+- Produces: proyecto Angular ejecutable (`ng serve`, `ng test`, `ng build`) con Angular Material (tema M3 dark, acento cian) y estructura de environments lista; CSS custom properties globales (`--bg-base`, `--surface-glass`, `--accent-500`, etc.) y la clase utilitaria `.glass-surface`, consumidos por todas las tareas de UI (Tasks 7-12).
 
 - [ ] **Step 1: Generar el proyecto**
 
@@ -316,23 +319,137 @@ Expected: crea `src/environments/environment.ts` (usado en build de producción)
 npx ng add @angular/material --theme=custom --typography=true --animations=enabled --skip-confirmation
 ```
 
-Expected: agrega las dependencias de `@angular/material`/`@angular/cdk`, genera un archivo de tema custom, y agrega providers de animaciones a `app.config.ts`.
+Expected: agrega las dependencias de `@angular/material`/`@angular/cdk`, genera un archivo de tema custom (normalmente un bloque `@include mat.theme(...)` insertado en `src/styles.scss`), y agrega providers de animaciones a `app.config.ts`.
 
-- [ ] **Step 4: Verificar que compila y los tests por defecto pasan**
+- [ ] **Step 4: Crear el archivo de tokens de diseño**
+
+Crear `frontend/src/styles/_tokens.scss`:
+
+```scss
+:root {
+  --bg-base: #0a0b0f;
+  --surface-glass: rgba(255, 255, 255, 0.04);
+  --surface-glass-border: rgba(255, 255, 255, 0.08);
+
+  --accent-300: #67e8f9;
+  --accent-500: #22d3ee;
+  --accent-600: #06b6d4;
+
+  --text-primary: #e4e6eb;
+  --text-secondary: #8a8f98;
+  --color-error: #f87171;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --transition-fast: 150ms ease-out;
+  --transition-base: 200ms ease-out;
+}
+
+.glass-surface {
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+```
+
+This uses plain CSS custom properties and a plain CSS utility class (no Sass `@mixin`) on purpose: components apply `class="glass-surface"` directly in their templates, so no relative `@use` import path juggling is needed from nested component folders. `:root` and `.glass-surface` are global selectors — they apply correctly even inside Angular's view-encapsulated component styles, because global stylesheet rules are never attribute-scoped.
+
+- [ ] **Step 5: Cablear tokens, fuentes y tema Material en `styles.scss`**
+
+Editar `frontend/src/styles.scss`: **al principio del archivo**, antes de cualquier otra regla, agregar:
+
+```scss
+@use './styles/tokens';
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap');
+```
+
+Luego, busca el bloque que el schematic de `ng add @angular/material` insertó (algo con `@use '@angular/material' as mat;` y un `@include mat.theme(...)` o `@include mat.core();` + mixins de tema). Ajusta ese bloque para que el tema sea dark con acento cian y las familias tipográficas correctas. Si el schematic generó la API M3 (`mat.theme`), el bloque debe quedar así (agregando `color-scheme: dark;` y las familias si no están):
+
+```scss
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: dark;
+
+  @include mat.theme((
+    color: (
+      theme-type: dark,
+      primary: mat.$cyan-palette,
+    ),
+    typography: (
+      brand-family: 'Space Grotesk',
+      plain-family: 'Inter',
+    ),
+    density: 0,
+  ));
+}
+```
+
+Si `mat.$cyan-palette` no existe en la versión instalada (la API de paletas M3 puede variar entre versiones de Angular Material), correr:
+
+```bash
+grep -ri "cyan" node_modules/@angular/material/core/theming/_palettes.scss
+```
+
+y usar el nombre exacto de la variable de paleta cian que exista ahí. El resto del bloque no cambia.
+
+Después del bloque de tema, agregar (o completar si el schematic ya puso algo parecido) los estilos base globales:
+
+```scss
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+.brand-heading {
+  font-family: var(--font-display);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent-500);
+  outline-offset: 2px;
+}
+```
+
+- [ ] **Step 6: Verificar que compila y los tests por defecto pasan**
 
 ```bash
 npx ng build
 npx ng test --watch=false --browsers=ChromeHeadless
 ```
 
-Expected: build exitoso; los specs por defecto generados por el CLI pasan (se ajustarán en la Task 8 cuando se reemplace `AppComponent`).
+Expected: build exitoso; los specs por defecto generados por el CLI pasan (se ajustarán en la Task 8 cuando se reemplace `AppComponent`). Si `ng build` falla en la línea de `mat.$cyan-palette`, aplica el fallback del Step 5 y vuelve a correr `ng build`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 cd ..
 git add frontend
-git commit -m "chore(frontend): scaffold del proyecto Angular con Material"
+git commit -m "chore(frontend): scaffold del proyecto Angular con Material y sistema de diseno"
 ```
 
 ---
@@ -346,7 +463,7 @@ git commit -m "chore(frontend): scaffold del proyecto Angular con Material"
 
 **Interfaces:**
 - Consumes: nada.
-- Produces: tipos `Producto` y `ProductoRequest` usados por `ProductoService` (Task 6) y ambos componentes de features (Tasks 10-11); `environment.apiUrl` usado por `ProductoService`.
+- Produces: tipos `Producto` y `ProductoRequest` usados por `ProductoService` (Task 6) y ambos componentes de features (Tasks 11-12); `environment.apiUrl` usado por `ProductoService`.
 
 - [ ] **Step 1: Crear el modelo**
 
@@ -409,7 +526,7 @@ git commit -m "feat(frontend): agrega modelo Producto y configuracion de environ
 
 **Interfaces:**
 - Consumes: `Producto`, `ProductoRequest` (Task 5), `environment.apiUrl` (Task 5).
-- Produces: `ProductoService` con signals `productos: Signal<Producto[]>`, `loading: Signal<boolean>`, y métodos `listar()`, `buscarPorId(id: number)`, `crear(dto: ProductoRequest)`, `actualizar(id: number, dto: ProductoRequest)`, `eliminar(id: number)` — todos devuelven `Observable`. Usado por `ProductoListComponent` (Task 10) y `ProductoFormComponent` (Task 11).
+- Produces: `ProductoService` con signals `productos: Signal<Producto[]>`, `loading: Signal<boolean>`, y métodos `listar()`, `buscarPorId(id: number)`, `crear(dto: ProductoRequest)`, `actualizar(id: number, dto: ProductoRequest)`, `eliminar(id: number)` — todos devuelven `Observable`. Usado por `ProductoListComponent` (Task 11) y `ProductoFormComponent` (Task 12).
 
 - [ ] **Step 1: Escribir el test que falla**
 
@@ -552,8 +669,8 @@ git commit -m "feat(frontend): agrega ProductoService con signals de estado"
 - Test: `frontend/src/app/core/interceptors/error.interceptor.spec.ts`
 
 **Interfaces:**
-- Consumes: `MatSnackBar` (de `@angular/material/snack-bar`, ya disponible tras Task 4).
-- Produces: `errorInterceptor: HttpInterceptorFn`, registrado en `app.config.ts` en la Task 8.
+- Consumes: `MatSnackBar` (de `@angular/material/snack-bar`, ya disponible tras Task 4); `.glass-surface` y tokens de color de `frontend/src/styles/_tokens.scss` (Task 4), vía las clases globales `app-toast`/`app-toast--error` añadidas a `styles.scss` en el Step 3 de esta tarea.
+- Produces: `errorInterceptor: HttpInterceptorFn`, registrado en `app.config.ts` en la Task 8; clases globales `app-toast`, `app-toast--success`, `app-toast--error` reutilizadas también por `ProductoFormComponent`/`ProductoListComponent` (Task 11-12) para sus toasts de éxito.
 
 - [ ] **Step 1: Escribir el test que falla**
 
@@ -587,7 +704,7 @@ describe('errorInterceptor', () => {
 
   afterEach(() => httpMock.verify());
 
-  it('muestra el mensaje del backend en un snackbar cuando la peticion falla', () => {
+  it('muestra el mensaje del backend en un snackbar con estilo de error cuando la peticion falla', () => {
     httpClient.get('/api/productos/999').subscribe({ error: () => {} });
 
     const req = httpMock.expectOne('/api/productos/999');
@@ -599,7 +716,7 @@ describe('errorInterceptor', () => {
     expect(snackBarOpenSpy).toHaveBeenCalledWith(
       'No se encontro el producto con id: 999',
       'Cerrar',
-      { duration: 5000 }
+      { duration: 5000, panelClass: ['app-toast', 'app-toast--error'] }
     );
   });
 });
@@ -610,7 +727,31 @@ describe('errorInterceptor', () => {
 Run: `npx ng test --watch=false --browsers=ChromeHeadless --include='**/error.interceptor.spec.ts'`
 Expected: FAIL (`error.interceptor.ts` no existe).
 
-- [ ] **Step 3: Implementar el interceptor**
+- [ ] **Step 3: Agregar las clases de toast globales**
+
+En `frontend/src/styles.scss`, agregar (después de los estilos base agregados en la Task 4):
+
+```scss
+.app-toast .mat-mdc-snack-bar-surface {
+  background: var(--surface-glass) !important;
+  backdrop-filter: blur(16px);
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-body);
+}
+
+.app-toast--success .mat-mdc-snack-bar-surface {
+  border: 1px solid var(--accent-500);
+}
+
+.app-toast--error .mat-mdc-snack-bar-surface {
+  border: 1px solid var(--color-error);
+}
+```
+
+(Se usa `.mat-mdc-snack-bar-surface` porque `MatSnackBar` renderiza su contenido fuera del árbol de este componente vía overlay — un `panelClass` + selector global es la forma correcta de restylearlo, un estilo scoped al componente no llegaría ahí.)
+
+- [ ] **Step 4: Implementar el interceptor**
 
 Crear `frontend/src/app/core/interceptors/error.interceptor.ts`:
 
@@ -634,7 +775,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       const mensaje =
         body?.detalles?.[0] ?? body?.message ?? 'Ocurrio un error inesperado. Intenta de nuevo.';
 
-      snackBar.open(mensaje, 'Cerrar', { duration: 5000 });
+      snackBar.open(mensaje, 'Cerrar', { duration: 5000, panelClass: ['app-toast', 'app-toast--error'] });
 
       return throwError(() => error);
     })
@@ -642,16 +783,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 };
 ```
 
-- [ ] **Step 4: Correr el test y verificar que pasa**
+- [ ] **Step 5: Correr el test y verificar que pasa**
 
 Run: `npx ng test --watch=false --browsers=ChromeHeadless --include='**/error.interceptor.spec.ts'`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add frontend/src/app/core/interceptors
-git commit -m "feat(frontend): agrega ErrorInterceptor con notificaciones via snackbar"
+git add frontend/src/app/core/interceptors frontend/src/styles.scss
+git commit -m "feat(frontend): agrega ErrorInterceptor con toasts con estilo custom"
 ```
 
 ---
@@ -703,7 +844,7 @@ export const routes: Routes = [
 ];
 ```
 
-(Los componentes importados se crean en las Tasks 10 y 11 — hasta entonces `ng build` fallará al resolver esos imports; por eso esta tarea se prueba solo con `ng test`, no con `ng build`. `ng build` completo se valida al final de la Task 11.)
+(Los componentes importados se crean en las Tasks 11 y 12 — hasta entonces `ng build` fallará al resolver esos imports; por eso esta tarea se prueba solo con `ng test`, no con `ng build`. `ng build` completo se valida al final de la Task 12.)
 
 - [ ] **Step 2: Asegurar los providers en `app.config.ts`**
 
@@ -730,7 +871,7 @@ export const appConfig: ApplicationConfig = {
 
 (Si el schematic de Material ya agregó `provideAnimationsAsync()` u otro provider de animaciones con otro nombre, dejar solo uno — no duplicar providers de animaciones.)
 
-- [ ] **Step 3: Reescribir `AppComponent` como shell con toolbar**
+- [ ] **Step 3: Reescribir `AppComponent` como shell con toolbar glass y transición de página**
 
 Reemplazar `frontend/src/app/app.component.ts` (elimina `app.component.html`/`app.component.scss` si el CLI los generó por separado; el componente pasa a usar `template`/`styles` inline):
 
@@ -739,24 +880,41 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
+import { trigger, transition, style, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, MatToolbarModule, MatIconModule],
+  animations: [
+    trigger('routeFade', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(8px)' }),
+        animate('200ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
+      ]),
+    ]),
+  ],
   template: `
-    <mat-toolbar color="primary">
+    <mat-toolbar class="app-toolbar glass-surface">
       <mat-icon>inventory_2</mat-icon>
       <span class="app-title">Producto API</span>
     </mat-toolbar>
     <main class="app-content">
-      <router-outlet />
+      <div [@routeFade]="outlet.isActivated ? outlet.activatedRoute : ''">
+        <router-outlet #outlet="outlet" />
+      </div>
     </main>
   `,
   styles: [
     `
+      .app-toolbar {
+        background: transparent;
+        border-radius: 0;
+        border-width: 0 0 1px;
+      }
       .app-title {
         margin-left: 8px;
+        font-family: var(--font-display);
         font-weight: 600;
       }
       .app-content {
@@ -769,6 +927,8 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class AppComponent {}
 ```
+
+`[@routeFade]` está atado a `outlet.activatedRoute`, que cambia cada vez que el router activa una ruta distinta (por ejemplo `/productos` → `/productos/nuevo`), lo que hace que Angular vuelva a ejecutar la transición `:enter` en cada navegación entre las 3 rutas de la Task 8. `RouterOutlet` expone `exportAs: 'outlet'`, por eso `#outlet="outlet"` es válido.
 
 - [ ] **Step 4: Actualizar el test de `AppComponent`**
 
@@ -819,17 +979,19 @@ git commit -m "feat(frontend): agrega rutas, toolbar y providers del app shell"
 
 ---
 
-## Task 9: Frontend — ConfirmDialogComponent (compartido)
+## Task 9: Frontend — ConfirmDialogComponent + EmptyStateComponent (compartidos)
 
 **Files:**
 - Create: `frontend/src/app/shared/confirm-dialog/confirm-dialog.component.ts`
 - Test: `frontend/src/app/shared/confirm-dialog/confirm-dialog.component.spec.ts`
+- Create: `frontend/src/app/shared/empty-state/empty-state.component.ts`
+- Test: `frontend/src/app/shared/empty-state/empty-state.component.spec.ts`
 
 **Interfaces:**
-- Consumes: `MatDialogModule` (disponible desde Task 4).
-- Produces: `ConfirmDialogComponent` y `ConfirmDialogData { titulo: string; mensaje: string }`, abierto vía `MatDialog.open()` desde `ProductoListComponent` (Task 10); cierra con `true` (confirmado) o `false`/`undefined` (cancelado).
+- Consumes: `MatDialogModule` (disponible desde Task 4); tokens de color de `_tokens.scss` (Task 4).
+- Produces: `ConfirmDialogComponent` y `ConfirmDialogData { titulo: string; mensaje: string }`, abierto vía `MatDialog.open()` desde `ProductoListComponent` (Task 11) con `panelClass: 'app-confirm-dialog-panel'`; cierra con `true` (confirmado) o `false`/`undefined` (cancelado). `EmptyStateComponent` con `@Input() mensaje`, `@Input() ctaLabel`, `@Input() ctaLink`, usado por `ProductoListComponent` (Task 11) para su estado vacío.
 
-- [ ] **Step 1: Escribir el test que falla**
+- [ ] **Step 1: Escribir el test que falla (ConfirmDialogComponent)**
 
 Crear `frontend/src/app/shared/confirm-dialog/confirm-dialog.component.spec.ts`:
 
@@ -872,7 +1034,7 @@ describe('ConfirmDialogComponent', () => {
 Run: `npx ng test --watch=false --browsers=ChromeHeadless --include='**/confirm-dialog.component.spec.ts'`
 Expected: FAIL (`ConfirmDialogComponent` no existe).
 
-- [ ] **Step 3: Implementar el componente**
+- [ ] **Step 3: Implementar `ConfirmDialogComponent` con estilo glass y botón destructivo en rojo**
 
 Crear `frontend/src/app/shared/confirm-dialog/confirm-dialog.component.ts`:
 
@@ -891,13 +1053,24 @@ export interface ConfirmDialogData {
   standalone: true,
   imports: [MatDialogModule, MatButtonModule],
   template: `
-    <h2 mat-dialog-title>{{ data.titulo }}</h2>
+    <h2 mat-dialog-title class="confirm-title">{{ data.titulo }}</h2>
     <mat-dialog-content>{{ data.mensaje }}</mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button (click)="dialogRef.close(false)">Cancelar</button>
-      <button mat-flat-button color="warn" (click)="dialogRef.close(true)">Eliminar</button>
+      <button mat-flat-button class="confirm-destructive-btn" (click)="dialogRef.close(true)">Eliminar</button>
     </mat-dialog-actions>
   `,
+  styles: [
+    `
+      .confirm-title {
+        font-family: var(--font-display);
+      }
+      .confirm-destructive-btn {
+        background: var(--color-error);
+        color: var(--bg-base);
+      }
+    `,
+  ],
 })
 export class ConfirmDialogComponent {
   readonly dialogRef = inject(MatDialogRef<ConfirmDialogComponent>);
@@ -905,21 +1078,347 @@ export class ConfirmDialogComponent {
 }
 ```
 
-- [ ] **Step 4: Correr el test y verificar que pasa**
+En `frontend/src/styles.scss`, agregar (junto a las clases `.app-toast` de la Task 7) el estilo global para la superficie del diálogo, porque `MatDialog` también renderiza fuera del árbol del componente que lo abre:
+
+```scss
+.app-confirm-dialog-panel .mat-mdc-dialog-surface {
+  background: var(--surface-glass) !important;
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: var(--radius-lg) !important;
+}
+```
+
+- [ ] **Step 4: Correr el test de ConfirmDialogComponent y verificar que pasa**
 
 Run: `npx ng test --watch=false --browsers=ChromeHeadless --include='**/confirm-dialog.component.spec.ts'`
+Expected: PASS
+
+- [ ] **Step 5: Escribir el test que falla (EmptyStateComponent)**
+
+Crear `frontend/src/app/shared/empty-state/empty-state.component.spec.ts`:
+
+```typescript
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { EmptyStateComponent } from './empty-state.component';
+
+describe('EmptyStateComponent', () => {
+  it('renderiza el mensaje y el CTA con el label indicado', async () => {
+    await TestBed.configureTestingModule({
+      imports: [EmptyStateComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(EmptyStateComponent);
+    fixture.componentInstance.mensaje = 'Aun no hay productos por aqui';
+    fixture.componentInstance.ctaLabel = 'Crear el primero';
+    fixture.componentInstance.ctaLink = '/productos/nuevo';
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.empty-state-message')?.textContent).toContain(
+      'Aun no hay productos por aqui'
+    );
+    expect(compiled.querySelector('button')?.textContent).toContain('Crear el primero');
+  });
+});
+```
+
+- [ ] **Step 6: Correr el test y verificar que falla**
+
+Run: `npx ng test --watch=false --browsers=ChromeHeadless --include='**/empty-state.component.spec.ts'`
+Expected: FAIL (`EmptyStateComponent` no existe).
+
+- [ ] **Step 7: Implementar `EmptyStateComponent`**
+
+Crear `frontend/src/app/shared/empty-state/empty-state.component.ts`:
+
+```typescript
+import { Component, Input } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+
+@Component({
+  selector: 'app-empty-state',
+  standalone: true,
+  imports: [RouterLink, MatButtonModule],
+  template: `
+    <div class="empty-state">
+      <svg
+        class="empty-state-icon"
+        width="96"
+        height="96"
+        viewBox="0 0 96 96"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <rect x="16" y="36" width="64" height="40" rx="6" />
+        <path d="M16 44 L48 60 L80 44" />
+        <path d="M34 36 L34 24 L62 24 L62 36" />
+      </svg>
+      <p class="empty-state-message">{{ mensaje }}</p>
+      <button mat-flat-button color="primary" [routerLink]="ctaLink">
+        {{ ctaLabel }}
+      </button>
+    </div>
+  `,
+  styleUrl: './empty-state.component.scss',
+})
+export class EmptyStateComponent {
+  @Input() mensaje = 'Aun no hay nada por aqui';
+  @Input() ctaLabel = 'Crear';
+  @Input() ctaLink = '/';
+}
+```
+
+Crear `frontend/src/app/shared/empty-state/empty-state.component.scss`:
+
+```scss
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-12) 0;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.empty-state-icon {
+  color: var(--accent-500);
+  opacity: 0.8;
+}
+
+.empty-state-message {
+  margin: 0;
+  font-size: 1rem;
+}
+```
+
+- [ ] **Step 8: Correr el test y verificar que pasa**
+
+Run: `npx ng test --watch=false --browsers=ChromeHeadless --include='**/empty-state.component.spec.ts'`
+Expected: PASS
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add frontend/src/app/shared frontend/src/styles.scss
+git commit -m "feat(frontend): agrega ConfirmDialogComponent y EmptyStateComponent con estilo glass"
+```
+
+---
+
+## Task 10: Frontend — StatCardComponent (compartido)
+
+**Files:**
+- Create: `frontend/src/app/shared/stat-card/stat-card.component.ts`
+- Create: `frontend/src/app/shared/stat-card/stat-card.component.scss`
+- Test: `frontend/src/app/shared/stat-card/stat-card.component.spec.ts`
+
+**Interfaces:**
+- Consumes: tokens de color/tipografía/espaciado de `_tokens.scss` (Task 4).
+- Produces: `StatCardComponent` con `@Input() label: string`, `@Input() value: number`, `@Input() prefix?: string`, `@Input() decimals?: number`, `@Input() showProgress?: boolean`, `@Input() progressPercent?: number`; usado por `ProductoListComponent` (Task 11) para las 3 tarjetas de estadísticas.
+
+- [ ] **Step 1: Escribir el test que falla**
+
+Crear `frontend/src/app/shared/stat-card/stat-card.component.spec.ts`:
+
+```typescript
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { SimpleChange } from '@angular/core';
+import { StatCardComponent } from './stat-card.component';
+
+describe('StatCardComponent', () => {
+  let fixture: ComponentFixture<StatCardComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [StatCardComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(StatCardComponent);
+  });
+
+  it('anima hasta el valor final con count-up', fakeAsync(() => {
+    const component = fixture.componentInstance;
+    component.label = 'Total de productos';
+    component.value = 42;
+    component.ngOnChanges({ value: new SimpleChange(0, 42, false) });
+
+    tick(1000);
+
+    expect(component.displayValue()).toBe('42');
+  }));
+
+  it('aplica un transform con rotate al mover el mouse sobre la card', () => {
+    fixture.componentInstance.label = 'Total de productos';
+    fixture.componentInstance.value = 10;
+    fixture.detectChanges();
+
+    const cardEl: HTMLElement = fixture.nativeElement.querySelector('.stat-card');
+    const rect = cardEl.getBoundingClientRect();
+
+    cardEl.dispatchEvent(
+      new MouseEvent('mousemove', {
+        clientX: rect.left + rect.width * 0.75,
+        clientY: rect.top + rect.height * 0.25,
+      })
+    );
+
+    expect(cardEl.style.transform).toContain('rotate');
+  });
+});
+```
+
+- [ ] **Step 2: Correr el test y verificar que falla**
+
+Run: `npx ng test --watch=false --browsers=ChromeHeadless --include='**/stat-card.component.spec.ts'`
+Expected: FAIL (`StatCardComponent` no existe).
+
+- [ ] **Step 3: Implementar el componente**
+
+Crear `frontend/src/app/shared/stat-card/stat-card.component.ts`:
+
+```typescript
+import {
+  Component,
+  ElementRef,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  ViewChild,
+  signal,
+} from '@angular/core';
+
+@Component({
+  selector: 'app-stat-card',
+  standalone: true,
+  template: `
+    <div #card class="stat-card glass-surface" (mousemove)="onMouseMove($event)" (mouseleave)="onMouseLeave()">
+      <p class="stat-label">{{ label }}</p>
+      <p class="stat-value">{{ prefix }}{{ displayValue() }}</p>
+      @if (showProgress) {
+        <div class="stat-progress">
+          <div class="stat-progress-fill" [style.width.%]="progressPercent"></div>
+        </div>
+      }
+    </div>
+  `,
+  styleUrl: './stat-card.component.scss',
+})
+export class StatCardComponent implements OnChanges {
+  @Input({ required: true }) label = '';
+  @Input({ required: true }) value = 0;
+  @Input() prefix = '';
+  @Input() decimals = 0;
+  @Input() showProgress = false;
+  @Input() progressPercent = 0;
+
+  @ViewChild('card') cardRef!: ElementRef<HTMLElement>;
+
+  readonly displayValue = signal('0');
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['value']) {
+      this.animarCountUp(changes['value'].previousValue ?? 0, this.value);
+    }
+  }
+
+  private animarCountUp(desde: number, hasta: number): void {
+    const duracionMs = 800;
+    const inicio = performance.now();
+
+    const paso = (ahora: number) => {
+      const progreso = Math.min((ahora - inicio) / duracionMs, 1);
+      const easedProgreso = 1 - Math.pow(1 - progreso, 3);
+      const actual = desde + (hasta - desde) * easedProgreso;
+      this.displayValue.set(actual.toFixed(this.decimals));
+
+      if (progreso < 1) {
+        requestAnimationFrame(paso);
+      }
+    };
+
+    requestAnimationFrame(paso);
+  }
+
+  onMouseMove(event: MouseEvent): void {
+    const el = this.cardRef.nativeElement;
+    const rect = el.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const centroX = rect.width / 2;
+    const centroY = rect.height / 2;
+    const rotateY = ((x - centroX) / centroX) * 8;
+    const rotateX = -((y - centroY) / centroY) * 8;
+
+    el.style.transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  }
+
+  onMouseLeave(): void {
+    this.cardRef.nativeElement.style.transform = 'perspective(600px) rotateX(0deg) rotateY(0deg)';
+  }
+}
+```
+
+Crear `frontend/src/app/shared/stat-card/stat-card.component.scss`:
+
+```scss
+.stat-card {
+  padding: var(--space-6);
+  transition: transform var(--transition-fast);
+  will-change: transform;
+}
+
+.stat-label {
+  margin: 0 0 var(--space-2);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+}
+
+.stat-value {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.stat-progress {
+  margin-top: var(--space-4);
+  height: 4px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.stat-progress-fill {
+  height: 100%;
+  background: var(--accent-500);
+  transition: width var(--transition-base);
+}
+```
+
+- [ ] **Step 4: Correr el test y verificar que pasa**
+
+Run: `npx ng test --watch=false --browsers=ChromeHeadless --include='**/stat-card.component.spec.ts'`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add frontend/src/app/shared
-git commit -m "feat(frontend): agrega ConfirmDialogComponent reutilizable"
+git add frontend/src/app/shared/stat-card
+git commit -m "feat(frontend): agrega StatCardComponent con count-up y tilt 3D"
 ```
 
 ---
 
-## Task 10: Frontend — ProductoListComponent
+## Task 11: Frontend — ProductoListComponent
 
 **Files:**
 - Create: `frontend/src/app/features/productos/producto-list/producto-list.component.ts`
@@ -928,8 +1427,8 @@ git commit -m "feat(frontend): agrega ConfirmDialogComponent reutilizable"
 - Test: `frontend/src/app/features/productos/producto-list/producto-list.component.spec.ts`
 
 **Interfaces:**
-- Consumes: `ProductoService` (Task 6), `ConfirmDialogComponent`/`ConfirmDialogData` (Task 9), `Producto` (Task 5).
-- Produces: componente enrutado en `/productos` (referenciado por `app.routes.ts`, Task 8); expone `busqueda: WritableSignal<string>`, `productosFiltrados: Signal<Producto[]>`, `onBuscar(termino: string)`, `onOrdenar(sort: Sort)`, `eliminar(producto: Producto)`.
+- Consumes: `ProductoService` (Task 6), `ConfirmDialogComponent`/`ConfirmDialogData` (Task 9), `EmptyStateComponent` (Task 9), `StatCardComponent` (Task 10), `Producto` (Task 5), clases globales `app-toast`/`app-confirm-dialog-panel` (Tasks 7, 9).
+- Produces: componente enrutado en `/productos` (referenciado por `app.routes.ts`, Task 8); expone `busqueda: WritableSignal<string>`, `productosFiltrados: Signal<Producto[]>`, `totalProductos`/`valorTotalInventario`/`precioPromedio: Signal<number>` (computed), `onBuscar(termino: string)`, `onOrdenar(sort: Sort)`, `eliminar(producto: Producto)`.
 
 - [ ] **Step 1: Escribir el test que falla**
 
@@ -984,6 +1483,15 @@ describe('ProductoListComponent', () => {
 
     expect(fixture.componentInstance.productosFiltrados()).toEqual([productos[1]]);
   });
+
+  it('calcula total, valor total y precio promedio del inventario', () => {
+    const fixture = TestBed.createComponent(ProductoListComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.totalProductos()).toBe(2);
+    expect(fixture.componentInstance.valorTotalInventario()).toBe(59900 + 189900);
+    expect(fixture.componentInstance.precioPromedio()).toBe((59900 + 189900) / 2);
+  });
 });
 ```
 
@@ -1014,6 +1522,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ProductoService } from '../../../core/services/producto.service';
 import { Producto } from '../../../core/models/producto.model';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
+import { EmptyStateComponent } from '../../../shared/empty-state/empty-state.component';
+import { StatCardComponent } from '../../../shared/stat-card/stat-card.component';
 
 @Component({
   selector: 'app-producto-list',
@@ -1030,6 +1540,8 @@ import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-d
     MatTableModule,
     MatSortModule,
     MatTooltipModule,
+    EmptyStateComponent,
+    StatCardComponent,
   ],
   templateUrl: './producto-list.component.html',
   styleUrl: './producto-list.component.scss',
@@ -1044,6 +1556,19 @@ export class ProductoListComponent implements OnInit {
   readonly ordenActivo = signal<Sort>({ active: '', direction: '' });
 
   readonly loading = this.productoService.loading;
+
+  readonly totalProductos = computed(() => this.productoService.productos().length);
+
+  readonly valorTotalInventario = computed(() =>
+    this.productoService.productos().reduce((acumulado, p) => acumulado + p.precio, 0)
+  );
+
+  readonly precioPromedio = computed(() => {
+    const total = this.totalProductos();
+    return total === 0 ? 0 : this.valorTotalInventario() / total;
+  });
+
+  readonly progresoDecorativo = computed(() => Math.min(this.totalProductos() * 10, 100));
 
   readonly productosFiltrados = computed(() => {
     const termino = this.busqueda().trim().toLowerCase();
@@ -1077,6 +1602,7 @@ export class ProductoListComponent implements OnInit {
 
   eliminar(producto: Producto): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      panelClass: 'app-confirm-dialog-panel',
       data: {
         titulo: 'Eliminar producto',
         mensaje: `¿Eliminar "${producto.nombre}"? Esta accion no se puede deshacer.`,
@@ -1089,7 +1615,10 @@ export class ProductoListComponent implements OnInit {
       }
 
       this.productoService.eliminar(producto.id).subscribe(() => {
-        this.snackBar.open(`"${producto.nombre}" eliminado`, 'Cerrar', { duration: 3000 });
+        this.snackBar.open(`"${producto.nombre}" eliminado`, 'Cerrar', {
+          duration: 3000,
+          panelClass: ['app-toast', 'app-toast--success'],
+        });
         this.productoService.listar().subscribe();
       });
     });
@@ -1100,7 +1629,18 @@ export class ProductoListComponent implements OnInit {
 Crear `frontend/src/app/features/productos/producto-list/producto-list.component.html`:
 
 ```html
-<mat-toolbar class="list-toolbar">
+<div class="stats-row">
+  <app-stat-card
+    label="Total de productos"
+    [value]="totalProductos()"
+    [showProgress]="true"
+    [progressPercent]="progresoDecorativo()"
+  />
+  <app-stat-card label="Valor total del inventario" [value]="valorTotalInventario()" prefix="$" [decimals]="2" />
+  <app-stat-card label="Precio promedio" [value]="precioPromedio()" prefix="$" [decimals]="2" />
+</div>
+
+<mat-toolbar class="list-toolbar glass-surface">
   <mat-form-field appearance="outline" class="buscador">
     <mat-icon matPrefix>search</mat-icon>
     <input
@@ -1122,15 +1662,13 @@ Crear `frontend/src/app/features/productos/producto-list/producto-list.component
 @if (loading()) {
   <div class="skeleton" *ngFor="let i of [1, 2, 3, 4]"></div>
 } @else if (productosFiltrados().length === 0) {
-  <div class="estado-vacio">
-    <mat-icon>inventory_2</mat-icon>
-    <p>Aun no hay productos</p>
-    <button mat-stroked-button color="primary" routerLink="/productos/nuevo">
-      Crear el primero
-    </button>
-  </div>
+  <app-empty-state
+    mensaje="Aun no hay productos por aqui — creemos el primero"
+    ctaLabel="Crear el primero"
+    ctaLink="/productos/nuevo"
+  />
 } @else {
-  <table mat-table [dataSource]="productosFiltrados()" matSort (matSortChange)="onOrdenar($event)">
+  <table mat-table [dataSource]="productosFiltrados()" matSort (matSortChange)="onOrdenar($event)" class="glass-surface">
     <ng-container matColumnDef="id">
       <th mat-header-cell *matHeaderCellDef>ID</th>
       <td mat-cell *matCellDef="let p">{{ p.id }}</td>
@@ -1155,7 +1693,7 @@ Crear `frontend/src/app/features/productos/producto-list/producto-list.component
 
     <ng-container matColumnDef="acciones">
       <th mat-header-cell *matHeaderCellDef>Acciones</th>
-      <td mat-cell *matCellDef="let p">
+      <td mat-cell *matCellDef="let p" class="acciones-cell">
         <button mat-icon-button [routerLink]="['/productos', p.id, 'editar']" aria-label="Editar">
           <mat-icon>edit</mat-icon>
         </button>
@@ -1174,10 +1712,17 @@ Crear `frontend/src/app/features/productos/producto-list/producto-list.component
 Crear `frontend/src/app/features/productos/producto-list/producto-list.component.scss`:
 
 ```scss
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
 .list-toolbar {
-  gap: 16px;
-  background: transparent;
-  padding: 0 0 16px;
+  gap: var(--space-4);
+  padding: 0 var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
 .buscador {
@@ -1190,9 +1735,38 @@ Crear `frontend/src/app/features/productos/producto-list/producto-list.component
 
 table {
   width: 100%;
-  background: #1c2028;
-  border-radius: 12px;
   overflow: hidden;
+}
+
+tr[mat-row] {
+  animation: rowFadeIn var(--transition-base) ease-out;
+}
+
+@keyframes rowFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+tr[mat-row]:hover {
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 0 1px var(--surface-glass-border);
+}
+
+.acciones-cell {
+  opacity: 0;
+  transform: translateX(4px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+tr[mat-row]:hover .acciones-cell {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .descripcion-cell {
@@ -1202,20 +1776,16 @@ table {
   white-space: nowrap;
 }
 
-.estado-vacio {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 64px 0;
-  color: #8a8f98;
-}
-
 .skeleton {
   height: 48px;
   margin-bottom: 8px;
-  border-radius: 8px;
-  background: linear-gradient(90deg, #1c2028 25%, #22262f 37%, #1c2028 63%);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--surface-glass) 25%,
+    rgba(255, 255, 255, 0.08) 37%,
+    var(--surface-glass) 63%
+  );
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
 }
@@ -1230,6 +1800,13 @@ table {
 }
 ```
 
+Nota de alcance: las filas que salen del resultado filtrado no animan una
+transición de "salida" — cuando `productosFiltrados()` cambia, Angular
+Material recrea las filas de la tabla y solo las filas que quedan en el
+resultado se animan con `rowFadeIn` al aparecer. Animar la salida
+requeriría mantener las filas filtradas en el DOM y ocultarlas en vez de
+quitarlas del `dataSource`, lo cual no está en el alcance de esta tarea.
+
 - [ ] **Step 4: Correr el test y verificar que pasa**
 
 Run: `npx ng test --watch=false --browsers=ChromeHeadless --include='**/producto-list.component.spec.ts'`
@@ -1239,12 +1816,12 @@ Expected: PASS
 
 ```bash
 git add frontend/src/app/features/productos/producto-list
-git commit -m "feat(frontend): agrega ProductoListComponent con busqueda, orden y borrado"
+git commit -m "feat(frontend): agrega dashboard de stats, hover-reveal y estado vacio a ProductoListComponent"
 ```
 
 ---
 
-## Task 11: Frontend — ProductoFormComponent
+## Task 12: Frontend — ProductoFormComponent
 
 **Files:**
 - Create: `frontend/src/app/features/productos/producto-form/producto-form.component.ts`
@@ -1253,7 +1830,7 @@ git commit -m "feat(frontend): agrega ProductoListComponent con busqueda, orden 
 - Test: `frontend/src/app/features/productos/producto-form/producto-form.component.spec.ts`
 
 **Interfaces:**
-- Consumes: `ProductoService` (Task 6), `Producto`/`ProductoRequest` (Task 5).
+- Consumes: `ProductoService` (Task 6), `Producto`/`ProductoRequest` (Task 5), clase global `app-toast` (Task 7).
 - Produces: componente enrutado en `/productos/nuevo` y `/productos/:id/editar` (referenciado por `app.routes.ts`, Task 8); con esta tarea completa, `ng build` del proyecto completo debe compilar.
 
 - [ ] **Step 1: Escribir el test que falla**
@@ -1261,7 +1838,7 @@ git commit -m "feat(frontend): agrega ProductoListComponent con busqueda, orden 
 Crear `frontend/src/app/features/productos/producto-form/producto-form.component.spec.ts`:
 
 ```typescript
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router, ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -1307,7 +1884,24 @@ describe('ProductoFormComponent', () => {
     expect(fixture.componentInstance.form.invalid).toBe(true);
   });
 
-  it('llama a crear() y navega a /productos al guardar un formulario valido', () => {
+  it('llama a crear() y navega a /productos al guardar un formulario valido', fakeAsync(() => {
+    const fixture = TestBed.createComponent(ProductoFormComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.form.setValue({
+      nombre: 'Mouse',
+      descripcion: 'Inalambrico',
+      precio: 100,
+    });
+
+    fixture.componentInstance.guardar();
+    tick(400);
+
+    expect(productoServiceStub.crear).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/productos']);
+  }));
+
+  it('muestra el icono de check brevemente antes de navegar', fakeAsync(() => {
     const fixture = TestBed.createComponent(ProductoFormComponent);
     fixture.detectChanges();
 
@@ -1319,9 +1913,11 @@ describe('ProductoFormComponent', () => {
 
     fixture.componentInstance.guardar();
 
-    expect(productoServiceStub.crear).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/productos']);
-  });
+    expect(fixture.componentInstance.guardadoOk()).toBe(true);
+    expect(fixture.componentInstance.guardando()).toBe(false);
+
+    tick(400);
+  }));
 });
 ```
 
@@ -1343,6 +1939,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -1359,6 +1956,7 @@ import { ProductoService } from '../../../core/services/producto.service';
     MatInputModule,
     MatButtonModule,
     MatCardModule,
+    MatIconModule,
     MatProgressSpinnerModule,
   ],
   templateUrl: './producto-form.component.html',
@@ -1372,6 +1970,7 @@ export class ProductoFormComponent implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
 
   readonly guardando = signal(false);
+  readonly guardadoOk = signal(false);
   productoId: number | null = null;
 
   readonly form = this.fb.nonNullable.group({
@@ -1415,8 +2014,13 @@ export class ProductoFormComponent implements OnInit {
     peticion.subscribe({
       next: () => {
         this.guardando.set(false);
-        this.snackBar.open('Producto guardado', 'Cerrar', { duration: 3000 });
-        this.router.navigate(['/productos']);
+        this.guardadoOk.set(true);
+        this.snackBar.open('Producto guardado', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['app-toast', 'app-toast--success'],
+        });
+
+        setTimeout(() => this.router.navigate(['/productos']), 400);
       },
       error: () => this.guardando.set(false),
     });
@@ -1424,12 +2028,14 @@ export class ProductoFormComponent implements OnInit {
 }
 ```
 
+`guardadoOk` se pone en `true` de inmediato al recibir la respuesta exitosa (antes del `snackBar.open`), y la navegación se retrasa 400ms para que el ícono de check alcance a mostrarse — el test "muestra el icono de check brevemente antes de navegar" verifica exactamente esa secuencia sin avanzar el tiempo virtual.
+
 Crear `frontend/src/app/features/productos/producto-form/producto-form.component.html`:
 
 ```html
-<mat-card class="form-card">
+<mat-card class="form-card glass-surface">
   <mat-card-header>
-    <mat-card-title>{{ modoEdicion ? 'Editar producto' : 'Nuevo producto' }}</mat-card-title>
+    <mat-card-title class="form-title">{{ modoEdicion ? 'Editar producto' : 'Nuevo producto' }}</mat-card-title>
   </mat-card-header>
 
   <mat-card-content>
@@ -1469,6 +2075,8 @@ Crear `frontend/src/app/features/productos/producto-form/producto-form.component
         <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || guardando()">
           @if (guardando()) {
             <mat-spinner diameter="20"></mat-spinner>
+          } @else if (guardadoOk()) {
+            <mat-icon class="check-icon">check</mat-icon>
           } @else {
             Guardar
           }
@@ -1485,20 +2093,37 @@ Crear `frontend/src/app/features/productos/producto-form/producto-form.component
 .form-card {
   max-width: 480px;
   margin: 0 auto;
-  background: #1c2028;
-  border-radius: 12px;
+}
+
+.form-title {
+  font-family: var(--font-display);
 }
 
 .campo {
   width: 100%;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .acciones {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.check-icon {
+  animation: checkPop 400ms ease-out;
+}
+
+@keyframes checkPop {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 ```
 
@@ -1525,7 +2150,7 @@ git commit -m "feat(frontend): agrega ProductoFormComponent para crear y editar"
 
 ---
 
-## Task 12: Archivos de despliegue (Netlify + Render)
+## Task 13: Archivos de despliegue (Netlify + Render)
 
 **Files:**
 - Create: `frontend/netlify.toml`
@@ -1582,7 +2207,7 @@ services:
         sync: false
 ```
 
-(Las 4 variables quedan con `sync: false` a propósito: Render las pedirá manualmente al aplicar el blueprint, porque el valor de `DB_URL` debe construirse a mano — ver Task 13 — a partir de la base de datos Postgres que se cree por separado en Render.)
+(Las 4 variables quedan con `sync: false` a propósito: Render las pedirá manualmente al aplicar el blueprint, porque el valor de `DB_URL` debe construirse a mano — ver Task 14 — a partir de la base de datos Postgres que se cree por separado en Render.)
 
 - [ ] **Step 4: Verificar sintaxis**
 
@@ -1598,7 +2223,7 @@ git commit -m "chore(deploy): agrega configuracion de Netlify y blueprint de Ren
 
 ---
 
-## Task 13: README y runbook de despliegue final
+## Task 14: README y runbook de despliegue final
 
 **Files:**
 - Modify: `README.md`
@@ -1615,7 +2240,9 @@ Agregar al final de `README.md` (después de la sección existente "Guion sugeri
 ## Frontend (Angular)
 
 El frontend vive en `frontend/` — Angular con Angular Material, standalone
-components, signals, dark mode.
+components, signals, dark mode con identidad propia (glassmorphism, acento
+cian, tipografia Space Grotesk + Inter) y un dashboard de estadisticas
+sobre el CRUD de productos.
 
 ### Correr en local
 
@@ -1681,7 +2308,7 @@ git commit -m "docs: agrega instrucciones de frontend y runbook de despliegue"
 git push origin main
 ```
 
-Expected: todos los commits de las Tasks 1-13 quedan sincronizados en `https://github.com/<usuario>/producto-api`.
+Expected: todos los commits de las Tasks 1-14 quedan sincronizados en `https://github.com/<usuario>/producto-api`.
 
 - [ ] **Step 4: Verificación final manual**
 
@@ -1694,7 +2321,37 @@ Expected: abrir `http://localhost:4200` muestra la lista de productos (vacía al
 
 ## Self-Review Notes
 
-- **Cobertura de la spec:** estructura del monorepo (Tasks 4, 12), arquitectura Angular standalone+signals (Tasks 6-11), diseño de lista/formulario/dark mode (Tasks 10-11), cambios de backend CORS+seguridad (Tasks 1-2), despliegue Netlify+Render (Tasks 12-13), git/GitHub (Task 3) — todos cubiertos.
-- **Sin placeholders:** cada paso de código trae el contenido completo del archivo; no quedan "TODO"/"similar a la Task N".
-- **Consistencia de tipos:** `Producto`/`ProductoRequest` (Task 5) se usan idénticos en `ProductoService` (Task 6), `ProductoListComponent` (Task 10) y `ProductoFormComponent` (Task 11); `ConfirmDialogData` (Task 9) coincide entre definición y uso en Task 10.
-- **Paleta de color exacta:** la spec dejó la paleta final (violeta vs. esmeralda) para decidir en implementación — el ejecutor de la Task 4/8 puede elegir cualquiera de las dos siempre que cumpla contraste WCAG AA sobre `#0f1115`/`#1c2028`; no bloquea ninguna otra tarea.
+- **Cobertura de la spec (revisión visual del 2026-08-19):** identidad
+  visual propia — paleta cian + `_tokens.scss` + tema Material M3 dark
+  (Task 4), toasts con estilo glass (Task 7), toolbar glass + transición
+  de página (Task 8), diálogo/estado vacío restyleados (Task 9),
+  dashboard de 3 stat cards con count-up + tilt 3D (Task 10, consumido en
+  Task 11), micro-interacciones de tabla — hover-reveal, shimmer, fade-in
+  de filas (Task 11), botón "Guardar" con animación check (Task 12) —
+  todos cubiertos. Command palette y animación de salida de filas se
+  descartaron explícitamente (ver "Decisiones de diseño" en la spec y las
+  Rulings del ledger).
+- **Cobertura de la spec (base):** estructura del monorepo (Tasks 4, 13),
+  arquitectura Angular standalone+signals (Tasks 6-12), CRUD de
+  lista/formulario (Tasks 11-12), cambios de backend CORS+seguridad
+  (Tasks 1-2), despliegue Netlify+Render (Tasks 13-14), git/GitHub
+  (Task 3) — todos cubiertos.
+- **Sin placeholders:** cada paso de código trae el contenido completo
+  del archivo; no quedan "TODO"/"similar a la Task N".
+- **Consistencia de tipos:** `Producto`/`ProductoRequest` (Task 5) se
+  usan idénticos en `ProductoService` (Task 6), `ProductoListComponent`
+  (Task 11) y `ProductoFormComponent` (Task 12); `ConfirmDialogData`
+  (Task 9) coincide entre definición y uso en Task 11;
+  `StatCardComponent`'s `@Input` names (`label`, `value`, `prefix`,
+  `decimals`, `showProgress`, `progressPercent`, Task 10) coinciden
+  exactamente con los bindings usados en Task 11's template.
+- **Paleta de color exacta:** ya no queda abierta — fijada en cian
+  eléctrico (`--accent-500: #22d3ee`) en `_tokens.scss` (Task 4),
+  consumida vía CSS custom properties por todas las tareas de UI
+  posteriores. Contraste sobre `--bg-base: #0a0b0f` es alto (cian claro
+  sobre casi negro), cumple WCAG AA para texto/íconos de acento.
+- **Riesgo de API conocido:** la sintaxis exacta de `mat.$cyan-palette`
+  (Task 4, Step 5) depende de la versión de Angular Material instalada
+  al momento de ejecutar el plan; el paso incluye un comando de
+  fallback (`grep` sobre el archivo de paletas) para no bloquear la
+  tarea si el nombre exacto difiere.
