@@ -1,0 +1,25 @@
+<div class="distribucion">
+  @if (total === 0) {
+    <p class="distribucion-vacio">Aun no hay datos suficientes.</p>
+  } @else {
+    <div class="distribucion-barra" role="img" aria-label="Distribucion de productos por rango de precio">
+      @for (cat of categorias; track cat.label) {
+        <div
+          class="distribucion-segmento"
+          [class]="'distribucion-segmento distribucion-segmento--' + cat.clase"
+          [style.width.%]="porcentaje(cat.valor)"
+        ></div>
+      }
+    </div>
+  }
+
+  <ul class="distribucion-leyenda">
+    @for (cat of categorias; track cat.label) {
+      <li class="distribucion-leyenda-item">
+        <span class="distribucion-swatch" [class]="'distribucion-swatch distribucion-swatch--' + cat.clase"></span>
+        <span class="distribucion-leyenda-label">{{ cat.label }}</span>
+        <span class="distribucion-leyenda-valor">{{ cat.valor }}</span>
+      </li>
+    }
+  </ul>
+</div>

@@ -29,6 +29,14 @@
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
   --transition-fast: 150ms ease-out;
   --transition-base: 200ms ease-out;
+
+  // Categorical chart palette (validated: node scripts/validate_palette.js
+  // "#3987e5,#d95926,#199e70" --mode dark --surface #0a0b0f --pairs all).
+  // Distinct from --accent-500 on purpose: the accent is brand/UI identity,
+  // this triplet is for multi-category data series only.
+  --chart-cat-1: #3987e5;
+  --chart-cat-2: #d95926;
+  --chart-cat-3: #199e70;
 }
 
 .glass-surface {
@@ -38,4 +46,53 @@
   border: 1px solid var(--surface-glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
+}
+
+// Animated "moving light" border: a rotating conic-gradient masked down to
+// a thin ring around the element, so it never covers the card's content.
+// Applied alongside .glass-surface (which owns the actual card background).
+@property --glow-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.glow-border {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--glow-angle),
+      transparent 0deg,
+      var(--accent-300) 15deg,
+      var(--accent-500) 40deg,
+      transparent 90deg,
+      transparent 360deg
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: glow-rotate 4s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+@keyframes glow-rotate {
+  to {
+    --glow-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-border::before {
+    animation: none;
+  }
 }

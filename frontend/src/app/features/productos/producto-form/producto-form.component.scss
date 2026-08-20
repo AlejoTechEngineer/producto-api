@@ -33,3 +33,14 @@
     opacity: 1;
   }
 }
+
+@media (max-width: 480px) {
+  .acciones {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .acciones button {
+    width: 100%;
+  }
+}

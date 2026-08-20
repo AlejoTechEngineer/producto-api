@@ -1,0 +1,49 @@
+<div class="login-page">
+  <mat-card class="login-card glass-surface">
+    <mat-card-content>
+      <div class="login-brand">
+        <mat-icon class="login-icon">inventory_2</mat-icon>
+        <h1 class="brand-heading">Producto API</h1>
+        <p class="login-subtitulo">Ingresa con tu cuenta de administrador</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="ingresar()">
+        <mat-form-field appearance="outline" class="campo">
+          <mat-label>Usuario</mat-label>
+          <mat-icon matPrefix>person</mat-icon>
+          <input matInput formControlName="usuario" autocomplete="username" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="campo">
+          <mat-label>Contrasena</mat-label>
+          <mat-icon matPrefix>lock</mat-icon>
+          <input
+            matInput
+            formControlName="password"
+            autocomplete="current-password"
+            [type]="ocultarPassword() ? 'password' : 'text'"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="ocultarPassword.set(!ocultarPassword())"
+            [attr.aria-label]="ocultarPassword() ? 'Mostrar contrasena' : 'Ocultar contrasena'"
+          >
+            <mat-icon>{{ ocultarPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </mat-form-field>
+
+        @if (error()) {
+          <p class="login-error">Usuario o contrasena incorrectos.</p>
+        }
+
+        <button mat-flat-button color="primary" type="submit" class="login-submit" [disabled]="form.invalid">
+          Ingresar
+        </button>
+      </form>
+
+      <p class="login-hint">Demo: usuario <strong>admin</strong> / contrasena <strong>admin</strong></p>
+    </mat-card-content>
+  </mat-card>
+</div>

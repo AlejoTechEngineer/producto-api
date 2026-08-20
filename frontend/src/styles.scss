@@ -31,9 +31,26 @@ html,
 body {
   height: 100%;
   margin: 0;
-  background: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-body);
+}
+
+body {
+  background-color: var(--bg-base);
+  background-image:
+    linear-gradient(rgba(10, 11, 15, 0.93), rgba(10, 11, 15, 0.93)),
+    url('/img/background.jpg');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+@media (max-width: 720px) {
+  body {
+    // fixed backgrounds can jank on mobile scroll; scroll normally there
+    background-attachment: scroll;
+  }
 }
 
 h1,

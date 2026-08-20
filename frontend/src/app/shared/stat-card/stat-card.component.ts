@@ -12,7 +12,7 @@ import {
   selector: 'app-stat-card',
   standalone: true,
   template: `
-    <div #card class="stat-card glass-surface" (mousemove)="onMouseMove($event)" (mouseleave)="onMouseLeave()">
+    <div #card class="stat-card glass-surface glow-border" (mousemove)="onMouseMove($event)" (mouseleave)="onMouseLeave()">
       <p class="stat-label">{{ label }}</p>
       <p class="stat-value">{{ prefix }}{{ displayValue() }}</p>
       @if (showProgress) {

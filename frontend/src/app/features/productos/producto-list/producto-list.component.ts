@@ -17,6 +17,8 @@ import { Producto } from '../../../core/models/producto.model';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
 import { EmptyStateComponent } from '../../../shared/empty-state/empty-state.component';
 import { StatCardComponent } from '../../../shared/stat-card/stat-card.component';
+import { TopProductosChartComponent } from '../../../shared/top-productos-chart/top-productos-chart.component';
+import { DistribucionPreciosChartComponent } from '../../../shared/distribucion-precios-chart/distribucion-precios-chart.component';
 
 @Component({
   selector: 'app-producto-list',
@@ -35,6 +37,8 @@ import { StatCardComponent } from '../../../shared/stat-card/stat-card.component
     MatTooltipModule,
     EmptyStateComponent,
     StatCardComponent,
+    TopProductosChartComponent,
+    DistribucionPreciosChartComponent,
   ],
   templateUrl: './producto-list.component.html',
   styleUrl: './producto-list.component.scss',
@@ -62,6 +66,34 @@ export class ProductoListComponent implements OnInit {
   });
 
   readonly progresoDecorativo = computed(() => Math.min(this.totalProductos() * 10, 100));
+
+  readonly top5PorPrecio = computed(() =>
+    [...this.productoService.productos()]
+      .sort((a, b) => b.precio - a.precio)
+      .slice(0, 5)
+      .map((p) => ({ nombre: p.nombre, precio: p.precio }))
+  );
+
+  readonly distribucionPrecios = computed(() => {
+    const productos = this.productoService.productos();
+    const maximo = Math.max(...productos.map((p) => p.precio), 0);
+    const corte1 = maximo / 3;
+    const corte2 = (maximo * 2) / 3;
+
+    return productos.reduce(
+      (acumulado, p) => {
+        if (p.precio <= corte1) {
+          acumulado.bajo++;
+        } else if (p.precio <= corte2) {
+          acumulado.medio++;
+        } else {
+          acumulado.alto++;
+        }
+        return acumulado;
+      },
+      { bajo: 0, medio: 0, alto: 0 }
+    );
+  });
 
   readonly productosFiltrados = computed(() => {
     const termino = this.busqueda().trim().toLowerCase();

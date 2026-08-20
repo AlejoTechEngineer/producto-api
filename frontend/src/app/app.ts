@@ -1,13 +1,16 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterOutlet, RouterLink } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, MatToolbarModule, MatIconModule],
+  imports: [RouterOutlet, RouterLink, MatToolbarModule, MatIconModule, MatButtonModule, MatTooltipModule],
   animations: [
     trigger('routeFade', [
       transition(':enter', [
@@ -24,6 +27,15 @@ import { trigger, transition, style, animate } from '@angular/animations';
     <mat-toolbar class="app-toolbar glass-surface">
       <mat-icon>inventory_2</mat-icon>
       <span class="app-title">Producto API</span>
+      <span class="app-spacer"></span>
+      @if (authService.isAuthenticated()) {
+        <button mat-icon-button routerLink="/acerca-de" matTooltip="Acerca de" aria-label="Acerca de">
+          <mat-icon>info</mat-icon>
+        </button>
+        <button mat-icon-button (click)="cerrarSesion()" matTooltip="Cerrar sesion" aria-label="Cerrar sesion">
+          <mat-icon>logout</mat-icon>
+        </button>
+      }
     </mat-toolbar>
     <main class="app-content">
       <div [@routeFade]="outlet.isActivated ? outlet.activatedRoute : ''">
@@ -43,6 +55,9 @@ import { trigger, transition, style, animate } from '@angular/animations';
         font-family: var(--font-display);
         font-weight: 600;
       }
+      .app-spacer {
+        flex: 1 1 auto;
+      }
       .app-content {
         max-width: 1100px;
         margin: 0 auto;
@@ -51,4 +66,12 @@ import { trigger, transition, style, animate } from '@angular/animations';
     `,
   ],
 })
-export class App {}
+export class App {
+  protected readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
+  cerrarSesion(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+}

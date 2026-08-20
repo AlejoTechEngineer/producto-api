@@ -1,9 +1,15 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'productos', pathMatch: 'full' },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  {
+    path: 'login',
+    loadComponent: () => import('./features/login/login.component').then((m) => m.LoginComponent),
+  },
   {
     path: 'productos',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/productos/producto-list/producto-list.component').then(
         (m) => m.ProductoListComponent
@@ -11,6 +17,7 @@ export const routes: Routes = [
   },
   {
     path: 'productos/nuevo',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/productos/producto-form/producto-form.component').then(
         (m) => m.ProductoFormComponent
@@ -18,10 +25,17 @@ export const routes: Routes = [
   },
   {
     path: 'productos/:id/editar',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/productos/producto-form/producto-form.component').then(
         (m) => m.ProductoFormComponent
       ),
   },
-  { path: '**', redirectTo: 'productos' },
+  {
+    path: 'acerca-de',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/acerca-de/acerca-de.component').then((m) => m.AcercaDeComponent),
+  },
+  { path: '**', redirectTo: 'login' },
 ];

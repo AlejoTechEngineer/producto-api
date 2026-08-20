@@ -1,0 +1,52 @@
+.top-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.top-chart-fila {
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.top-chart-nombre {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-chart-pista {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  height: 20px;
+  overflow: hidden;
+}
+
+.top-chart-barra {
+  height: 100%;
+  background: var(--accent-500);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  transition: width var(--transition-base);
+}
+
+.top-chart-valor {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .top-chart-fila {
+    grid-template-columns: 72px 1fr auto;
+  }
+
+  .top-chart-nombre {
+    font-size: 0.75rem;
+  }
+}

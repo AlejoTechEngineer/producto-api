@@ -1,0 +1,62 @@
+<div class="acerca-de">
+  <header class="acerca-header">
+    <h1 class="brand-heading">Acerca de este proyecto</h1>
+    <p class="acerca-subtitulo">
+      Actividad Sumativa — Unidad 2, Arquitectura de Aplicaciones Web. CRUD de
+      Productos con backend Spring Boot y frontend Angular.
+    </p>
+  </header>
+
+  <section class="acerca-card glass-surface">
+    <h2>Lo que se desarrollo</h2>
+    <p class="acerca-lead">
+      La parte tecnica del proyecto — lo que no se ve directamente en pantalla,
+      pero sostiene todo lo que si se ve.
+    </p>
+
+    <h3>Backend</h3>
+    <ul>
+      <li>API REST con Spring Boot 3 + Spring Data JPA (Hibernate) + PostgreSQL.</li>
+      <li>CRUD completo de Producto: crear, listar, obtener por id, actualizar, eliminar.</li>
+      <li>Manejo centralizado de errores (404, 400 de validacion, 400 de tipo invalido, 500 generico) con cuerpo JSON consistente.</li>
+      <li>CORS configurado con origen permitido configurable por variable de entorno.</li>
+      <li>Endurecimiento de seguridad: sin password por defecto en la base de datos, mensajes de error 500 sanitizados (no exponen detalles internos).</li>
+    </ul>
+
+    <h3>Frontend</h3>
+    <ul>
+      <li>Angular con standalone components y signals (sin NgRx, sin NgModules).</li>
+      <li>Angular Material como base funcional (tabla, formularios, dialogos, toasts).</li>
+      <li>Sistema de diseno propio: tokens de color/tipografia/espaciado, modo oscuro con acento cian, tipografia Space Grotesk + Inter.</li>
+      <li>Formularios reactivos con validacion (nombre, descripcion, precio).</li>
+      <li>Interceptor HTTP centralizado para notificar errores del backend como toasts.</li>
+      <li>Diseno responsive (mobile, tablet, escritorio).</li>
+      <li>Guard de rutas con inicio de sesion (usuario/contrasena de demostracion).</li>
+      <li>Paleta de graficos validada para contraste y daltonismo (herramienta de validacion de accesibilidad de color).</li>
+    </ul>
+  </section>
+
+  <section class="acerca-card glass-surface">
+    <h2>Lo que se muestra</h2>
+    <p class="acerca-lead">
+      La parte visual — lo que efectivamente se ve e interactua al usar la aplicacion.
+    </p>
+
+    <ul>
+      <li><strong>Inicio de sesion</strong> con validacion de credenciales antes de entrar a la aplicacion.</li>
+      <li><strong>Dashboard</strong> con tarjetas de estadisticas (total de productos, valor del inventario, precio promedio) con animacion de conteo y efecto de inclinacion 3D al pasar el mouse.</li>
+      <li><strong>Graficos</strong> de ranking de productos por precio y de distribucion por rango de precio.</li>
+      <li><strong>Bordes animados</strong> con luz en movimiento en las tarjetas del dashboard.</li>
+      <li><strong>Listado</strong> de productos en tabla ordenable, con busqueda en tiempo real por nombre.</li>
+      <li><strong>Formulario</strong> de creacion y edicion con validacion visual inmediata.</li>
+      <li><strong>Confirmacion</strong> antes de eliminar un producto, para evitar borrados accidentales.</li>
+      <li><strong>Notificaciones</strong> (toasts) de exito y error con estilo propio.</li>
+      <li><strong>Transiciones</strong> animadas al navegar entre pantallas.</li>
+    </ul>
+  </section>
+
+  <a mat-flat-button color="primary" routerLink="/productos" class="acerca-volver">
+    <mat-icon>arrow_back</mat-icon>
+    Volver al listado
+  </a>
+</div>

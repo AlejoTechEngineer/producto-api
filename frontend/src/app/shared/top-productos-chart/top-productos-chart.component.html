@@ -1,0 +1,11 @@
+<div class="top-chart">
+  @for (p of productos; track p.nombre) {
+    <div class="top-chart-fila">
+      <span class="top-chart-nombre">{{ p.nombre }}</span>
+      <div class="top-chart-pista">
+        <div class="top-chart-barra" [style.width.%]="anchoPorcentaje(p.precio)"></div>
+      </div>
+      <span class="top-chart-valor">{{ p.precio | currency: 'USD' }}</span>
+    </div>
+  }
+</div>
